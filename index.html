@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Web Xóa Chữ Trong TXT</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --muted:#94a3b8; --txt:#e2e8f0;
+    --btn:#3b82f6; --btn2:#0ea5e9; --danger:#ef4444; --ok:#22c55e; --line:#334155;
+    --in:#0b1224;
+  }
+  *{box-sizing:border-box}
+  body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--txt);}
+  .wrap{max-width:1100px;margin:auto;padding:14px;}
+  h1{margin:0 0 10px 0;font-size:20px;letter-spacing:.2px}
+  .hint{color:var(--muted);font-size:12px;margin:6px 0 0}
+  .card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:12px; border:1px solid rgba(255,255,255,.06);}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .meta{font-size:12px;color:var(--muted);margin-bottom:8px}
+  textarea{
+    width:100%;
+    min-height:34vh;
+    padding:10px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.06);
+    background:var(--in);
+    color:var(--txt);
+    resize:vertical;
+    font-size:13px;
+    line-height:1.5;
+  }
+  input[type="text"]{
+    width: min(520px, 100%);
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.06);
+    background:var(--in);
+    color:var(--txt);
+    outline:none;
+  }
+  input[type="file"]{
+    background:var(--in);
+    padding:8px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.06);
+    color:var(--txt);
+    max-width:100%;
+  }
+  button{
+    padding:10px 12px;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    background:var(--btn);
+    color:white;
+    font-weight:700;
+    box-shadow: 0 10px 25px rgba(0,0,0,.25);
+  }
+  button:active{transform:translateY(1px)}
+  button.alt{background:var(--btn2)}
+  button.ok{background:var(--ok)}
+  button.danger{background:var(--danger)}
+  .btnGrid{
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap:10px;
+    width:100%;
+  }
+  @media (max-width: 820px){
+    .btnGrid{grid-template-columns: repeat(2, minmax(0,1fr));}
+    textarea{min-height:33vh;}
+  }
+  .chips{
+    display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;
+  }
+  .chip{
+    padding:8px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(11,18,36,.55);
+    color: var(--txt);
+    font-weight:700;
+    cursor:pointer;
+    user-select:none;
+  }
+  .chip:active{transform:translateY(1px)}
+  .chipMain{
+    background: rgba(34,197,94,.20);
+    border-color: rgba(34,197,94,.38);
+  }
+  .splitMeta{
+    display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+  }
+  .stat{
+    font-size:12px; color:var(--muted);
+    padding:6px 10px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.08);
+    background: rgba(11,18,36,.45);
+  }
+  details{margin-top:10px}
+  summary{cursor:pointer; color:var(--txt); font-weight:800}
+  .small{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Web Xóa Từ Trong TXT</h1>
+
+    <!-- TOP: INPUT TXT -->
+    <div class="card">
+      <div class="meta">Trên: TXT gốc (tải .txt hoặc dán). Giữa: nút xóa/dọn. Dưới: kết quả.</div>
+      <div class="row" style="margin-bottom:10px">
+        <input type="file" id="fileInput" accept=".txt" />
+        <button class="alt" id="btnPasteToInput" title="Đưa kết quả xuống dưới lên TXT gốc để xử lý tiếp">KQ → TXT gốc</button>
+      </div>
+      <textarea id="inputTxt" placeholder="Dán nội dung TXT vào đây..."></textarea>
+      <div class="hint">Mẹo: bấm “Dọn sạch nhanh (V4)” để xóa Qidian/UUKANSHU/⊥/(Tấu chương xong)/dòng có URL/ký tự rác chỉ 1 phát.</div>
+    </div>
+
+    <!-- MIDDLE: ACTIONS -->
+    <div class="card">
+      <div class="splitMeta">
+        <div class="meta" style="margin:0">Giữa: thao tác nhanh</div>
+        <div class="stat">Đã xóa: <b id="count">0</b> | Ký tự KQ: <b id="charCount">0</b> | Dòng KQ: <b id="lineCount">0</b></div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <input type="text" id="needle" placeholder="Nhập từ/cụm từ muốn xóa (VD: quảng cáo)" />
+      </div>
+
+      <div class="btnGrid" style="margin-top:10px">
+        <button id="btnRemove">Xóa (cụm từ)</button>
+        <button id="btnRemoveLine" class="alt">Xóa cả dòng chứa từ</button>
+        <button id="btnCleanV4" class="ok">Dọn sạch nhanh (V4)</button>
+        <button id="btnCopy" class="alt">Copy Kết Quả</button>
+        <button id="btnDownload" class="alt">Tải TXT</button>
+        <button id="btnClear" class="danger">Xóa Hết</button>
+      </div>
+
+        <div class="chips">
+          <div class="chip chipMain" data-preset="all">🔥 Xóa TẤT CẢ (1 lần ấn)</div>
+        <div class="chips">
+          <div class="chip chipMain" data-clean="pro4">⚡ Làm sạch nhanh (gộp + dòng trống + ký tự ẩn + dấu câu)</div>
+        </div>
+
+    <!-- BOTTOM: OUTPUT TXT -->
+    <div class="card">
+      <div class="meta">Dưới: Kết quả</div>
+      <textarea id="outputTxt" placeholder="Kết quả sẽ hiển thị ở đây..." readonly></textarea>
+    </div>
+  </div>
+
+<script>
+  const fileInput = document.getElementById("fileInput");
+  const inputTxt  = document.getElementById("inputTxt");
+  const outputTxt = document.getElementById("outputTxt");
+  const needle    = document.getElementById("needle");
+
+  const countEl   = document.getElementById("count");
+  const charCount = document.getElementById("charCount");
+  const lineCount = document.getElementById("lineCount");
+
+  const btnRemove = document.getElementById("btnRemove");
+  const btnRemoveLine = document.getElementById("btnRemoveLine");
+  const btnCleanV4 = document.getElementById("btnCleanV4");
+  const btnCopy   = document.getElementById("btnCopy");
+  const btnDownload = document.getElementById("btnDownload");
+  const btnClear  = document.getElementById("btnClear");
+  const btnPasteToInput = document.getElementById("btnPasteToInput");
+
+  let lastRemoved = 0;
+
+  function countLines(s){
+    if(!s) return 0;
+    return s.split(/\r\n|\r|\n/).length;
+  }
+
+  function updateStats(){
+    const out = outputTxt.value || "";
+    charCount.textContent = out.length;
+    lineCount.textContent = countLines(out);
+    countEl.textContent = lastRemoved || 0;
+  }
+
+  fileInput.addEventListener("change", function(){
+    const file = this.files && this.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      inputTxt.value = e.target.result || "";
+      outputTxt.value = "";
+      lastRemoved = 0;
+      updateStats();
+    };
+    reader.readAsText(file, "UTF-8");
+  });
+
+  function escapeRegExp(str){
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function setOutput(text, removed){
+    outputTxt.value = text || "";
+    lastRemoved = removed || 0;
+    updateStats();
+  }
+
+  function removeText(){
+    const source = inputTxt.value || "";
+    const word = (needle.value || "").trim();
+    if(!source.trim()){ setOutput("", 0); return; }
+    if(!word){ setOutput(source, 0); return; }
+
+    const regex = new RegExp(escapeRegExp(word), "gi");
+    let removed = 0;
+    const result = source.replace(regex, () => { removed++; return ""; });
+    setOutput(result, removed);
+  }
+
+  function removeLineContainingWord(){
+    const source = inputTxt.value || "";
+    const word = (needle.value || "").trim();
+    if(!source.trim()){ setOutput("", 0); return; }
+    if(!word){ setOutput(source, 0); return; }
+
+    const re = new RegExp(escapeRegExp(word), "i");
+    let removed = 0;
+    const lines = source.split(/\r\n|\r|\n/);
+    const kept = lines.filter(line => {
+      if(re.test(line)){ removed++; return false; }
+      return true;
+    });
+    setOutput(kept.join("\n"), removed);
+  }
+
+  // ===== Presets (xóa nhanh dòng) =====
+  function presetRemove(type){
+    const source = inputTxt.value || "";
+    if(!source.trim()){ setOutput("", 0); return; }
+    let removed = 0;
+    let lines = source.split(/\r\n|\r|\n/);
+
+    const reQidian = /Truyện được đăng tại\s*https?:\/\/[^\s]+\/truyen\/qidian\/1\/1047673087\/\d+\/\.?/i;
+    const reUukanshu = /UUKANSHU.*www\.uukanshu\.com/i;
+    const reTau = /\(\s*Tấu\s*chương\s*xong\s*\)/i;
+    const reUrl = /https?:\/\//i;
+
+    if(type === "qidian"){
+      lines = lines.filter(l => !(reQidian.test(l) ? (removed++, true) : false));
+      return setOutput(lines.join("\n"), removed);
+    }
+    if(type === "uukanshu"){
+      lines = lines.filter(l => !(reUukanshu.test(l) ? (removed++, true) : false));
+      return setOutput(lines.join("\n"), removed);
+    }
+    if(type === "perp"){
+      lines = lines.filter(l => !((l.includes("⊥")) ? (removed++, true) : false));
+      return setOutput(lines.join("\n"), removed);
+    }
+    if(type === "tauch"){
+      lines = lines.filter(l => !(reTau.test(l) ? (removed++, true) : false));
+      return setOutput(lines.join("\n"), removed);
+    }
+    if(type === "urls"){
+      lines = lines.filter(l => !(reUrl.test(l) ? (removed++, true) : false));
+      return setOutput(lines.join("\n"), removed);
+    }
+    if(type === "trashchars"){
+      // xóa ký tự rác trong toàn bộ text (không xóa cả dòng)
+      let text = source;
+      // — ~ "
+      const beforeLen = text.length;
+      text = text.replace(/[—~"]/g, "");
+      // ".)" -> ")" (xoá dấu chấm trước dấu ngoặc)
+      text = text.replace(/\.\)/g, ")");
+      // gộp nhiều khoảng trắng
+      text = text.replace(/[ \t]+/g, " ");
+      removed = Math.max(0, beforeLen - text.length);
+      return setOutput(text, removed);
+    }
+  }
+
+  // ===== Clean helpers =====
+  function removeHiddenChars(text){
+    // BOM + zero width chars
+    return (text || "")
+      .replace(/^\uFEFF/, "")
+      .replace(/[\u200B-\u200D\u2060]/g, "");
+  }
+
+  function fixPunct(text){
+    let t = text || "";
+
+    // 1) Gộp dấu câu lặp lại thành 1 cho nhóm: ! ? . , ( )
+    // Ví dụ: !!! -> !, ???? -> ?, ... -> ., ))) -> )
+    t = t.replace(/([!?\.,\(\)])\1+/g, "$1");
+
+    // 2) Bỏ khoảng trắng trước dấu câu (.,!?))
+    t = t.replace(/\s+([!?\.,\)])/g, "$1");
+
+    // 3) Bỏ khoảng trắng thừa sau "("
+    t = t.replace(/\(\s+/g, "(");
+
+    // 4) Thêm 1 khoảng trắng sau dấu câu nếu dính chữ ngay sau (trừ xuống dòng)
+    t = t.replace(/([!?\.,])([^\s\n\r])/g, "$1 $2");
+
+    return t;
+  }
+
+  function cleanSpaces(text){
+    return (text || "")
+      .split(/\r\n|\r|\n/)
+      .map(line => line.replace(/[ \t]+/g, " ").trim())
+      .join("\n");
+  }
+
+  function removeEmptyLines(text){
+    return (text || "")
+      .split(/\r\n|\r|\n/)
+      .filter(line => line.trim().length > 0)
+      .join("\n");
+  }
+
+  function cleanPro(text){
+    let t = text || "";
+
+    // Gộp các bước: xóa ký tự ẩn + gộp khoảng trắng + xóa dòng trống + sửa dấu câu lặp
+    t = removeHiddenChars(t);
+    t = cleanSpaces(t);
+    t = removeEmptyLines(t);
+    t = fixPunct(t);
+
+    // Chạy lại gộp khoảng trắng/dòng trống sau khi sửa dấu câu
+    t = cleanSpaces(t);
+    t = removeEmptyLines(t);
+
+    // Giảm các cụm xuống dòng quá nhiều
+    t = t.replace(/\n{3,}/g, "\n\n");
+    return t;
+  }
+
+  function cleanV4(){
+    const source = inputTxt.value || "";
+    if(!source.trim()){ setOutput("", 0); return; }
+    let removed = 0;
+    let t = source;
+
+    // 1) xóa footer Qidian trong toàn văn bản (không cần xuống dòng đúng)
+    const reQidianAll = /Truyện được đăng tại\s*https?:\/\/[^\s]+\/truyen\/qidian\/1\/1047673087\/\d+\/\.?/gi;
+    t = t.replace(reQidianAll, () => { removed++; return ""; });
+
+    // 2) xóa UUKANSHU line fragments
+    const reUukAll = /UUKANSHU.*www\.uukanshu\.com/gi;
+    t = t.replace(reUukAll, () => { removed++; return ""; });
+
+    // 3) xóa (Tấu chương xong)
+    const reTauAll = /\(\s*Tấu\s*chương\s*xong\s*\)/gi;
+    t = t.replace(reTauAll, () => { removed++; return ""; });
+
+    // 4) xóa ký tự rác — ~ " và sửa .)
+    t = t.replace(/[—~"]/g, "");
+    t = t.replace(/\.\)/g, ")");
+
+    // 5) xóa các dòng chứa ⊥ hoặc có URL (http/https)
+    const lines = t.split(/\r\n|\r|\n/);
+    let removedLines = 0;
+    const kept = lines.filter(line => {
+      const hit = line.includes("⊥") || /https?:\/\//i.test(line);
+      if(hit){ removedLines++; return false; }
+      return true;
+    });
+    t = kept.join("\n");
+    removed += removedLines;
+
+    // 6) làm sạch cuối
+    t = cleanPro(t);
+
+    setOutput(t, removed);
+  }
+
+  async function copyText(){
+    const val = outputTxt.value || "";
+    if(!val) return;
+    try{
+      await navigator.clipboard.writeText(val);
+      alert("Đã copy!");
+    }catch(e){
+      outputTxt.focus();
+      outputTxt.select();
+      document.execCommand("copy");
+      alert("Đã copy!");
+    }
+  }
+
+  function downloadTxt(){
+    const val = outputTxt.value || "";
+    if(!val) return;
+    const blob = new Blob([val], {type:"text/plain;charset=utf-8"});
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "ket-qua.txt";
+    link.click();
+    setTimeout(()=>URL.revokeObjectURL(link.href), 800);
+  }
+
+  function clearAll(){
+    inputTxt.value = "";
+    outputTxt.value = "";
+    needle.value = "";
+    lastRemoved = 0;
+    updateStats();
+  }
+
+  function pasteResultToInput(){
+    const val = outputTxt.value || "";
+    if(!val) return;
+    inputTxt.value = val;
+    outputTxt.value = "";
+    lastRemoved = 0;
+    updateStats();
+  }
+
+  // ===== Wire up =====
+  btnRemove.addEventListener("click", removeText);
+  btnRemoveLine.addEventListener("click", removeLineContainingWord);
+  btnCleanV4.addEventListener("click", cleanV4);
+  btnCopy.addEventListener("click", copyText);
+  btnDownload.addEventListener("click", downloadTxt);
+  btnClear.addEventListener("click", clearAll);
+  btnPasteToInput.addEventListener("click", pasteResultToInput);
+
+  document.querySelectorAll("[data-preset]").forEach(el=>{
+    el.addEventListener("click", ()=> presetRemove(el.getAttribute("data-preset")));
+  });
+
+  document.querySelectorAll("[data-clean]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const kind = el.getAttribute("data-clean");
+      const source = inputTxt.value || "";
+      if(!source.trim()){ setOutput("",0); return; }
+      let t = outputTxt.value ? outputTxt.value : source; // ưu tiên làm sạch trên KQ nếu có
+      let removed = 0;
+      const before = t;
+
+      if(kind === "pro4") t = cleanPro(t);
+// làm sạch nhẹ cuối
+      t = t.replace(/\n{3,}/g, "\n\n");
+      removed = Math.max(0, before.length - t.length);
+      setOutput(t, removed);
+    });
+  });
+
+  // init
+  updateStats();
+</script>
+</body>
+</html>
