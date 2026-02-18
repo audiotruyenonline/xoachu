@@ -246,6 +246,9 @@
     const reTau = /\(\s*Tấu\s*chương\s*xong\s*\)/i;
     const reUrl = /https?:\/\//i;
 
+    // 1-click: chạy toàn bộ gói dọn nhanh (V4)
+    if(type === "all"){ cleanV4(); return; }
+
     if(type === "qidian"){
       lines = lines.filter(l => !(reQidian.test(l) ? (removed++, true) : false));
       return setOutput(lines.join("\n"), removed);
@@ -362,11 +365,12 @@
     t = t.replace(/[—~"]/g, "");
     t = t.replace(/\.\)/g, ")");
 
-    // 5) xóa các dòng chứa ⊥ hoặc có URL (http/https)
+    // 5) xóa các dòng chứa ⊥ hoặc có URL (http/https) + cụm điều hướng
+    const reNavAny = /(Bạn đang đọc bản lưu trong hệ thống|Chương\s*trước|Mục\s*lục|Chương\s*sau)/i;
     const lines = t.split(/\r\n|\r|\n/);
     let removedLines = 0;
     const kept = lines.filter(line => {
-      const hit = line.includes("⊥") || /https?:\/\//i.test(line);
+      const hit = line.includes("⊥") || /https?:\/\//i.test(line) || reNavAny.test(line);
       if(hit){ removedLines++; return false; }
       return true;
     });
@@ -456,3 +460,4 @@
 </script>
 </body>
 </html>
+
