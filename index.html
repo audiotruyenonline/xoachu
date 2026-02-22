@@ -3,774 +3,370 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tool cắt & làm sạch chương truyện</title>
+  <title>Tool cắt & làm sạch chương truyện - v4 (priority start/end)</title>
   <style>
     :root{
-      --bg:#0b1220;
-      --panel:#121a2b;
-      --panel2:#0f1728;
-      --line:#23304a;
-      --text:#e8eefc;
-      --muted:#9fb0d4;
-      --accent:#4ea1ff;
-      --ok:#38d39f;
-      --warn:#ffb84d;
-      --err:#ff6b6b;
-      --chip:#1b2740;
+      --bg:#0b1220; --panel:#121a2b; --panel2:#0f1728; --line:#23304a;
+      --text:#e8eefc; --muted:#9fb0d4; --accent:#4ea1ff; --ok:#38d39f;
+      --warn:#ffb84d; --err:#ff6b6b; --chip:#1b2740;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:linear-gradient(180deg,#09101d,#0c1424 35%, #0a1220);
-      color:var(--text);
-    }
-    .wrap{
-      max-width:1200px;
-      margin:0 auto;
-      padding:16px;
-    }
-    .header{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-    }
-    .title{
-      font-size:20px;
-      font-weight:700;
-      letter-spacing:.2px;
-    }
-    .subtitle{
-      color:var(--muted);
-      font-size:13px;
-      margin-top:2px;
-    }
-    .card{
-      background:linear-gradient(180deg,var(--panel),var(--panel2));
-      border:1px solid var(--line);
-      border-radius:16px;
-      box-shadow:0 8px 24px rgba(0,0,0,.25);
-    }
-    .toolbar{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      padding:12px;
-      border-bottom:1px solid var(--line);
-      align-items:center;
-    }
-    .btn{
-      border:1px solid var(--line);
-      background:#16213a;
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:12px;
-      cursor:pointer;
-      font-weight:600;
-      font-size:14px;
-      transition:.15s ease;
-    }
-    .btn:hover{ transform:translateY(-1px); border-color:#315089; }
-    .btn:active{ transform:translateY(0); }
-    .btn.primary{ background:linear-gradient(180deg,#2f7be8,#235fba); border-color:#3b7fe0; }
-    .btn.success{ background:linear-gradient(180deg,#1e7c62,#16624f); border-color:#279a7b; }
-    .btn.warn{ background:linear-gradient(180deg,#8d6120,#6f4b16); border-color:#b37b28; }
-    .btn.ghost{ background:transparent; }
-    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
-    .pill{
-      margin-left:auto;
-      color:var(--muted);
-      font-size:12px;
-      background:var(--chip);
-      border:1px solid var(--line);
-      padding:6px 10px;
-      border-radius:999px;
-      white-space:nowrap;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-      padding:12px;
-    }
-    @media (max-width: 860px){
-      .grid{ grid-template-columns:1fr; }
-      .pill{ margin-left:0; }
-    }
-    .panel{
-      display:flex;
-      flex-direction:column;
-      min-height:460px;
-    }
-    .panel h3{
-      margin:0;
-      padding:12px 12px 0;
-      font-size:14px;
-      color:#dbe8ff;
-      font-weight:700;
-    }
-    .hint{
-      color:var(--muted);
-      font-size:12px;
-      padding:4px 12px 10px;
-    }
-    textarea{
-      width:100%;
-      min-height:360px;
-      resize:vertical;
-      border:1px solid var(--line);
-      background:#0b1322;
-      color:var(--text);
-      border-radius:12px;
-      padding:12px;
-      outline:none;
-      line-height:1.55;
-      font-size:14px;
-      margin:0 12px 12px;
-    }
-    textarea:focus{ border-color:#3f76d7; box-shadow:0 0 0 3px rgba(78,161,255,.12); }
-    .row{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      padding:0 12px 12px;
-    }
-    .row .btn{ padding:8px 10px; font-size:13px; }
-    .status{
-      margin:0 12px 12px;
-      border-radius:12px;
-      padding:10px 12px;
-      border:1px solid var(--line);
-      background:#101a2d;
-      color:var(--muted);
-      font-size:13px;
-      min-height:40px;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .status.ok{ color:#b9ffe7; border-color:rgba(56,211,159,.35); background:rgba(56,211,159,.08); }
-    .status.err{ color:#ffd1d1; border-color:rgba(255,107,107,.35); background:rgba(255,107,107,.08); }
-    .status.warn{ color:#ffe8c1; border-color:rgba(255,184,77,.35); background:rgba(255,184,77,.08); }
-    .footer{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:space-between;
-      color:var(--muted);
-      font-size:12px;
-      padding:10px 12px 14px;
-      border-top:1px dashed var(--line);
-    }
-    .mono{ font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
-    input[type="file"]{
-      display:none;
-    }
-    .stats{
-      display:flex; gap:8px; flex-wrap:wrap;
-    }
-    .chip{
-      background:var(--chip);
-      border:1px solid var(--line);
-      color:var(--muted);
-      padding:4px 8px;
-      border-radius:999px;
-      font-size:12px;
-    }
-    .drop{
-      margin:0 12px 12px;
-      border:1px dashed #34528b;
-      border-radius:12px;
-      padding:12px;
-      text-align:center;
-      color:var(--muted);
-      background:rgba(78,161,255,.05);
-      font-size:13px;
-    }
-    .drop.drag{
-      border-color:#67b4ff;
-      background:rgba(78,161,255,.12);
-      color:#d8ecff;
-    }
-    .kbd{
-      border:1px solid var(--line);
-      padding:1px 6px;
-      border-radius:6px;
-      background:#0e1729;
-      font-size:11px;
-      color:#c9daff;
-    }
-    details{
-      margin:12px;
-      border:1px solid var(--line);
-      border-radius:12px;
-      overflow:hidden;
-      background:#0f1728;
-    }
-    details > summary{
-      cursor:pointer;
-      padding:10px 12px;
-      color:#dbe8ff;
-      font-weight:600;
-      user-select:none;
-      list-style:none;
-    }
-    details > summary::-webkit-details-marker{ display:none; }
-    .detailsBody{
-      border-top:1px solid var(--line);
-      padding:12px;
-      display:grid;
-      gap:10px;
-    }
-    .detailsBody textarea{
-      min-height:88px;
-      margin:0;
-      resize:vertical;
-    }
-    .field{
-      display:grid;
-      gap:6px;
-    }
-    .field label{
-      font-size:12px;
-      color:var(--muted);
-    }
-    .field input,
-    .field textarea{
-      width:100%;
-      border:1px solid var(--line);
-      background:#0b1322;
-      color:var(--text);
-      border-radius:10px;
-      padding:10px;
-      outline:none;
-      font-size:14px;
-    }
-    .field textarea{
-      min-height:88px;
-      resize:vertical;
-      margin:0;
-      line-height:1.45;
-    }
-    .field input:focus,
-    .field textarea:focus{
-      border-color:#3f76d7;
-      box-shadow:0 0 0 3px rgba(78,161,255,.12);
-    }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#09101d,#0c1424 35%, #0a1220);color:var(--text)}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    .header{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+    .title{font-size:20px;font-weight:700}
+    .subtitle{color:var(--muted);font-size:13px}
+    .stats{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:var(--chip);border:1px solid var(--line);color:var(--muted);padding:4px 8px;border-radius:999px;font-size:12px}
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border-bottom:1px solid var(--line);align-items:center}
+    .btn{border:1px solid var(--line);background:#16213a;color:var(--text);padding:10px 12px;border-radius:12px;cursor:pointer;font-weight:600;font-size:14px}
+    .btn:hover{transform:translateY(-1px);border-color:#315089}
+    .btn.primary{background:linear-gradient(180deg,#2f7be8,#235fba);border-color:#3b7fe0}
+    .btn.success{background:linear-gradient(180deg,#1e7c62,#16624f);border-color:#279a7b}
+    .btn.warn{background:linear-gradient(180deg,#8d6120,#6f4b16);border-color:#b37b28}
+    .btn.ghost{background:transparent}
+    .pill{margin-left:auto;color:var(--muted);font-size:12px;background:var(--chip);border:1px solid var(--line);padding:6px 10px;border-radius:999px;white-space:nowrap}
+    input[type="file"]{display:none}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
+    @media (max-width:920px){.grid{grid-template-columns:1fr}.pill{margin-left:0}}
+    .panel{display:flex;flex-direction:column;min-height:480px}
+    .panel h3{margin:0;padding:12px 12px 0;font-size:14px}
+    .hint{color:var(--muted);font-size:12px;padding:4px 12px 10px}
+    textarea,input{width:100%;border:1px solid var(--line);background:#0b1322;color:var(--text);border-radius:12px;padding:12px;outline:none;font-size:14px}
+    textarea:focus,input:focus{border-color:#3f76d7;box-shadow:0 0 0 3px rgba(78,161,255,.12)}
+    textarea{line-height:1.55;resize:vertical}
+    #inputText,#outputText{min-height:360px;margin:0 12px 12px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 12px}
+    .row .btn{padding:8px 10px;font-size:13px}
+    .drop{margin:0 12px 12px;border:1px dashed #34528b;border-radius:12px;padding:12px;text-align:center;color:var(--muted);background:rgba(78,161,255,.05);font-size:13px}
+    .drop.drag{border-color:#67b4ff;background:rgba(78,161,255,.12);color:#d8ecff}
+    .status{margin:0 12px 12px;border-radius:12px;padding:10px 12px;border:1px solid var(--line);background:#101a2d;color:var(--muted);font-size:13px;min-height:42px;display:flex;align-items:center}
+    .status.ok{color:#b9ffe7;border-color:rgba(56,211,159,.35);background:rgba(56,211,159,.08)}
+    .status.err{color:#ffd1d1;border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.08)}
+    .status.warn{color:#ffe8c1;border-color:rgba(255,184,77,.35);background:rgba(255,184,77,.08)}
+    details{margin:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0f1728}
+    summary{cursor:pointer;padding:10px 12px;color:#dbe8ff;font-weight:600;user-select:none}
+    .detailsBody{border-top:1px solid var(--line);padding:12px;display:grid;gap:10px}
+    .field{display:grid;gap:6px}
+    .field label{font-size:12px;color:var(--muted)}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:920px){.two{grid-template-columns:1fr}}
+    .small{font-size:12px;color:var(--muted)}
+    .footer{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;color:var(--muted);font-size:12px;padding:10px 12px 14px;border-top:1px dashed var(--line)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .kbd{border:1px solid var(--line);padding:1px 6px;border-radius:6px;background:#0e1729;font-size:11px;color:#c9daff}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="header">
-      <div>
-        <div class="title">Tool cắt & làm sạch chương truyện</div>
-        <div class="subtitle">Tự lấy đoạn nội dung từ <span class="mono">@Bạn đang đọc bản lưu trong hệ thống</span> đến trước <span class="mono">Chương trước</span></div>
-      </div>
-      <div class="stats">
-        <div class="chip" id="statInput">Input: 0 ký tự</div>
-        <div class="chip" id="statOutput">Output: 0 ký tự</div>
-      </div>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="title">Tool cắt & làm sạch chương truyện (v5)</div>
+      <div class="subtitle">Hỗ trợ <b>mốc bắt đầu</b> và <b>mốc kết thúc</b> theo <b>thứ tự ưu tiên</b> • mỗi dòng 1 mốc</div>
     </div>
-
-    <div class="card">
-      <div class="toolbar">
-        <button class="btn primary" id="btnExtract">Lấy đoạn truyện</button>
-        <button class="btn success" id="btnOneClick">Làm sạch 1 chạm</button>
-        <button class="btn" id="btnCopy">Copy kết quả</button>
-        <button class="btn warn" id="btnDownloadTxt">Tải TXT</button>
-        <button class="btn ghost" id="btnSwap">Đưa kết quả lên ô trên</button>
-        <button class="btn ghost" id="btnClearAll">Xóa tất cả</button>
-
-        <label class="btn" for="fileInput">Mở file .txt</label>
-        <input id="fileInput" type="file" accept=".txt,text/plain">
-
-        <span class="pill">Mẹo: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> = Lấy đoạn</span>
-      </div>
-
-      <details>
-        <summary>⚙️ Tùy chỉnh mốc cắt (nếu web nguồn đổi mốc)</summary>
-        <div class="detailsBody">
-          <div class="field">
-            <label for="startMarker">Mốc bắt đầu (nội dung sẽ lấy SAU mốc này)</label>
-            <input id="startMarker" value="@Bạn đang đọc bản lưu trong hệ thống" />
-          </div>
-          <div class="field">
-            <label for="endMarker">Mốc kết thúc mặc định (fallback nếu danh sách ưu tiên bên dưới trống)</label>
-            <input id="endMarker" value="Chương trước" />
-          </div>
-          <div class="field">
-            <label for="endMarkersPriority">Mốc kết thúc theo thứ tự ưu tiên (mỗi dòng 1 mốc) — ví dụ: có "Chương trước" thì dùng ngay, nếu không có mới xét "Mục lục"</label>
-            <textarea id="endMarkersPriority" placeholder="Mỗi dòng 1 mốc kết thúc, xét theo thứ tự">Chương trước
-Mục lục
-Chương sau</textarea>
-          </div>
-          <div class="field">
-            <label for="extraRemovePhrases">Cụm từ xóa thêm (mỗi dòng 1 cụm) — ví dụ: Chương trước, Mục lục, Chương sau</label>
-            <textarea id="extraRemovePhrases" placeholder="Mỗi dòng 1 cụm từ cần xóa">Chương trước
-Mục lục
-Chương sau</textarea>
-          </div>
-        </div>
-      </details>
-
-      <div class="grid">
-        <div class="panel">
-          <h3>Văn bản gốc (dán vào đây)</h3>
-          <div class="hint">Dán toàn bộ nội dung copy từ web. Tool sẽ tự cắt phần truyện theo 2 mốc cố định.</div>
-          <div class="drop" id="dropZone">Kéo thả file <b>.txt</b> vào đây (hoặc bấm “Mở file .txt”)</div>
-          <textarea id="inputText" placeholder="Dán văn bản vào đây..."></textarea>
-          <div class="row">
-            <button class="btn" id="btnPaste">Dán từ clipboard</button>
-            <button class="btn" id="btnTrimInput">Xóa khoảng trắng đầu/cuối</button>
-            <button class="btn" id="btnNormalize">Chuẩn hóa xuống dòng</button>
-          </div>
-        </div>
-
-        <div class="panel">
-          <h3>Kết quả (đoạn truyện đã cắt)</h3>
-          <div class="hint">Kết quả sau khi cắt (và làm sạch nếu dùng nút “Làm sạch 1 chạm”).</div>
-          <textarea id="outputText" placeholder="Kết quả sẽ hiện ở đây..." readonly></textarea>
-          <div class="row">
-            <button class="btn" id="btnSelectOutput">Chọn toàn bộ kết quả</button>
-            <button class="btn" id="btnRemoveBlankLines">Gộp dòng trống dư</button>
-            <button class="btn" id="btnRemoveWatermark">Xóa watermark phổ biến</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="status" class="status">Sẵn sàng. Dán văn bản vào ô bên trái rồi bấm <b>Lấy đoạn truyện</b> hoặc <b>Làm sạch 1 chạm</b>.</div>
-
-      <div class="footer">
-        <div>✅ Chạy offline được • ✅ Dùng được trên GitHub Pages • ✅ Không cần server</div>
-        <div class="mono">v3.0 - priority end markers</div>
-      </div>
+    <div class="stats">
+      <div class="chip" id="statInput">Input: 0 ký tự</div>
+      <div class="chip" id="statOutput">Output: 0 ký tự</div>
     </div>
   </div>
 
-  <script>
-    const els = {
-      input: document.getElementById('inputText'),
-      output: document.getElementById('outputText'),
-      status: document.getElementById('status'),
-      statInput: document.getElementById('statInput'),
-      statOutput: document.getElementById('statOutput'),
-      startMarker: document.getElementById('startMarker'),
-      endMarker: document.getElementById('endMarker'),
-      endMarkersPriority: document.getElementById('endMarkersPriority'),
-      extraRemovePhrases: document.getElementById('extraRemovePhrases'),
-      fileInput: document.getElementById('fileInput'),
-      dropZone: document.getElementById('dropZone'),
-      btnExtract: document.getElementById('btnExtract'),
-      btnOneClick: document.getElementById('btnOneClick'),
-      btnCopy: document.getElementById('btnCopy'),
-      btnDownloadTxt: document.getElementById('btnDownloadTxt'),
-      btnSwap: document.getElementById('btnSwap'),
-      btnClearAll: document.getElementById('btnClearAll'),
-      btnPaste: document.getElementById('btnPaste'),
-      btnTrimInput: document.getElementById('btnTrimInput'),
-      btnNormalize: document.getElementById('btnNormalize'),
-      btnSelectOutput: document.getElementById('btnSelectOutput'),
-      btnRemoveBlankLines: document.getElementById('btnRemoveBlankLines'),
-      btnRemoveWatermark: document.getElementById('btnRemoveWatermark')
-    };
+  <div class="card">
+    <div class="toolbar">
+      <button class="btn primary" id="btnExtract">Lấy đoạn truyện</button>
+      <button class="btn success" id="btnOneClick">Làm sạch 1 chạm</button>
+      <button class="btn" id="btnCopy">Copy kết quả</button>
+      <button class="btn warn" id="btnDownloadTxt">Tải TXT</button>
+      <button class="btn ghost" id="btnSwap">Đưa kết quả lên ô trên</button>
+      <button class="btn ghost" id="btnClearAll">Xóa tất cả</button>
+      <label class="btn" for="fileInput">Mở file .txt</label>
+      <input id="fileInput" type="file" accept=".txt,text/plain">
+      <span class="pill">Mẹo: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> = Lấy đoạn</span>
+    </div>
 
-    function setStatus(msg, type=''){
-      els.status.className = 'status' + (type ? ' ' + type : '');
-      els.status.innerHTML = msg;
+    <details>
+      <summary>⚙️ Tùy chỉnh mốc cắt & cụm từ xóa thêm</summary>
+      <div class="detailsBody">
+        <div class="two">
+          <div class="field">
+            <label>Mốc bắt đầu mặc định (fallback nếu danh sách ưu tiên không khớp)</label>
+            <input id="startMarker" value="@Bạn đang đọc bản lưu trong hệ thống">
+          </div>
+          <div class="field">
+            <label>Mốc kết thúc mặc định (fallback nếu danh sách ưu tiên không khớp)</label>
+            <input id="endMarker" value="Chương trước">
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label>Mốc bắt đầu theo thứ tự ưu tiên (mỗi dòng 1 mốc)</label>
+            <textarea id="startMarkersPriority" rows="6">@Bạn đang đọc bản lưu trong hệ thống
+@ Bạn đang đọc bản lưu trong hệ thống</textarea>
+            <div class="small">Tool sẽ xét từ trên xuống: gặp mốc nào trước trong danh sách thì dùng mốc đó.</div>
+          </div>
+
+          <div class="field">
+            <label>Mốc kết thúc theo thứ tự ưu tiên (mỗi dòng 1 mốc)</label>
+            <textarea id="endMarkersPriority" rows="6">Chương trước
+Mục lục
+Chương sau</textarea>
+            <div class="small">Ví dụ: có "Chương trước" thì dừng ở đó; không có mới xét "Mục lục"... </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Cụm từ xóa thêm (mỗi dòng 1 cụm, áp dụng trong “Làm sạch 1 chạm” và “Xóa watermark phổ biến”)</label>
+          <textarea id="extraRemovePhrases" rows="12">Chương trước
+Mục lục
+Chương sau
+UUKANSHU đọc sách www.uukanshu.com
+www.uukanshu.com
+UUKANSHU
+uukanshu
+——
+......
+69 sách a www.69shu.org
+đổi mới nhanh nhất Chương mới nhất!
+( Tấu chương xong )
+.!)"</textarea>
+        </div>
+      </div>
+    </details>
+
+    <div class="grid">
+      <div class="panel">
+        <h3>Văn bản gốc (dán vào đây)</h3>
+        <div class="hint">Dán toàn bộ nội dung copy từ web. Tool sẽ tự cắt theo mốc ưu tiên bạn nhập.</div>
+        <div class="drop" id="dropZone">Kéo thả file <b>.txt</b> vào đây (hoặc bấm “Mở file .txt”)</div>
+        <textarea id="inputText" placeholder="Dán văn bản vào đây..."></textarea>
+        <div class="row">
+          <button class="btn" id="btnPaste">Dán từ clipboard</button>
+          <button class="btn" id="btnTrimInput">Xóa khoảng trắng đầu/cuối</button>
+          <button class="btn" id="btnNormalize">Chuẩn hóa xuống dòng</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Kết quả (đoạn truyện đã cắt)</h3>
+        <div class="hint">Kết quả sau khi cắt (và làm sạch nếu dùng “Làm sạch 1 chạm”).</div>
+        <textarea id="outputText" placeholder="Kết quả sẽ hiện ở đây..." readonly></textarea>
+        <div class="row">
+          <button class="btn" id="btnSelectOutput">Chọn toàn bộ kết quả</button>
+          <button class="btn" id="btnRemoveBlankLines">Gộp dòng trống dư</button>
+          <button class="btn" id="btnRemoveWatermark">Xóa watermark phổ biến</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="status" class="status">Sẵn sàng. Dán văn bản vào ô bên trái rồi bấm <b>Lấy đoạn truyện</b> hoặc <b>Làm sạch 1 chạm</b>.</div>
+
+    <div class="footer">
+      <div>✅ Offline • ✅ GitHub Pages • ✅ Ưu tiên mốc bắt đầu/kết thúc theo thứ tự</div>
+      <div class="mono">v5-extra-remove-presets</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const els = {
+  input: document.getElementById('inputText'),
+  output: document.getElementById('outputText'),
+  status: document.getElementById('status'),
+  statInput: document.getElementById('statInput'),
+  statOutput: document.getElementById('statOutput'),
+  startMarker: document.getElementById('startMarker'),
+  endMarker: document.getElementById('endMarker'),
+  startMarkersPriority: document.getElementById('startMarkersPriority'),
+  endMarkersPriority: document.getElementById('endMarkersPriority'),
+  extraRemovePhrases: document.getElementById('extraRemovePhrases'),
+  fileInput: document.getElementById('fileInput'),
+  dropZone: document.getElementById('dropZone'),
+  btnExtract: document.getElementById('btnExtract'),
+  btnOneClick: document.getElementById('btnOneClick'),
+  btnCopy: document.getElementById('btnCopy'),
+  btnDownloadTxt: document.getElementById('btnDownloadTxt'),
+  btnSwap: document.getElementById('btnSwap'),
+  btnClearAll: document.getElementById('btnClearAll'),
+  btnPaste: document.getElementById('btnPaste'),
+  btnTrimInput: document.getElementById('btnTrimInput'),
+  btnNormalize: document.getElementById('btnNormalize'),
+  btnSelectOutput: document.getElementById('btnSelectOutput'),
+  btnRemoveBlankLines: document.getElementById('btnRemoveBlankLines'),
+  btnRemoveWatermark: document.getElementById('btnRemoveWatermark')
+};
+
+function setStatus(msg, type=''){
+  els.status.className = 'status' + (type ? ' ' + type : '');
+  els.status.innerHTML = msg;
+}
+function normalizeNewlines(text){ return String(text || '').replace(/\r\n/g,'\n').replace(/\r/g,'\n'); }
+function updateStats(){
+  els.statInput.textContent = `Input: ${els.input.value.length.toLocaleString('vi-VN')} ký tự`;
+  els.statOutput.textContent = `Output: ${els.output.value.length.toLocaleString('vi-VN')} ký tự`;
+}
+function escapeRegExp(str){ return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function parseLines(value){
+  return normalizeNewlines(value).split('\n').map(s=>s.trim()).filter(Boolean);
+}
+function markerToRegex(marker){
+  const m = String(marker || '').trim();
+  if (!m) return null;
+  const lower = m.toLowerCase();
+  if (lower === '@bạn đang đọc bản lưu trong hệ thống' || lower === '@ bạn đang đọc bản lưu trong hệ thống'){
+    return /@\s*Bạn đang đọc bản lưu trong hệ thống/i;
+  }
+  return new RegExp(escapeRegExp(m), 'i');
+}
+function findMarkerByPriority(text, markers, fallbackMarker, kind='start'){
+  for (const marker of (markers || [])){
+    const re = markerToRegex(marker);
+    if (!re) continue;
+    const match = re.exec(text);
+    if (match){
+      return { ok:true, markerText: marker, match, source:'priority' };
     }
-
-    function normalizeNewlines(text){
-      return String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-    }
-
-    function updateStats(){
-      const i = els.input.value.length;
-      const o = els.output.value.length;
-      els.statInput.textContent = `Input: ${i.toLocaleString('vi-VN')} ký tự`;
-      els.statOutput.textContent = `Output: ${o.toLocaleString('vi-VN')} ký tự`;
-    }
-
-    function escapeRegExp(str){
-      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    function getEndMarkerPriorityList(){
-      const raw = (els.endMarkersPriority && els.endMarkersPriority.value) ? els.endMarkersPriority.value : '';
-      return normalizeNewlines(raw)
-        .split('\n')
-        .map(s => s.trim())
-        .filter(Boolean);
-    }
-
-    function findEndMatchByPriority(afterStart, endMarker, endMarkersPriority){
-      const priorityList = Array.isArray(endMarkersPriority) ? endMarkersPriority.map(s => String(s || '').trim()).filter(Boolean) : [];
-      const candidates = priorityList.length ? priorityList : [String(endMarker || 'Chương trước').trim()].filter(Boolean);
-
-      for (const marker of candidates) {
-        let endRegex;
-        if (marker.toLowerCase() === 'chương trước') {
-          endRegex = /Chương trước/i;
-        } else {
-          endRegex = new RegExp(escapeRegExp(marker), 'i');
-        }
-        const endMatch = endRegex.exec(afterStart);
-        if (endMatch) {
-          return { match: endMatch, marker };
-        }
-      }
-
-      return null;
-    }
-
-    function extractStoryContentRobust(rawText, startMarker, endMarker, endMarkersPriority){
-      if (!rawText || typeof rawText !== 'string') {
-        return { ok:false, error:'Không có dữ liệu văn bản.' };
-      }
-
-      const text = normalizeNewlines(rawText);
-
-      // Ưu tiên regex linh hoạt cho mốc đầu kiểu "@ Bạn..."
-      let startRegex;
-      if (startMarker && startMarker.trim()) {
-        // Nếu đúng mốc mặc định, cho phép linh hoạt khoảng trắng sau @
-        if (startMarker.trim().toLowerCase() === '@bạn đang đọc bản lưu trong hệ thống') {
-          startRegex = /@\s*Bạn đang đọc bản lưu trong hệ thống/i;
-        } else {
-          startRegex = new RegExp(escapeRegExp(startMarker.trim()), 'i');
-        }
-      } else {
-        startRegex = /@\s*Bạn đang đọc bản lưu trong hệ thống/i;
-      }
-
-      const startMatch = startRegex.exec(text);
-      if (!startMatch) {
-        return { ok:false, error:`Không tìm thấy mốc bắt đầu: "${startMarker || '@Bạn đang đọc bản lưu trong hệ thống'}"` };
-      }
-
-      const afterStart = text.slice(startMatch.index + startMatch[0].length);
-
-      const endFound = findEndMatchByPriority(afterStart, endMarker, endMarkersPriority);
-      if (!endFound) {
-        const listText = (Array.isArray(endMarkersPriority) && endMarkersPriority.length)
-          ? endMarkersPriority.join(' → ')
-          : (endMarker || 'Chương trước');
-        return { ok:false, error:`Không tìm thấy mốc kết thúc theo thứ tự ưu tiên: "${listText}"` };
-      }
-
-      const endMatch = endFound.match;
-      const endMarkerUsed = endFound.marker;
-      let story = afterStart.slice(0, endMatch.index);
-
-      story = story
-        .replace(/^\s+/, '')
-        .replace(/\s+$/, '')
-        .replace(/\u200B/g, '')
-        .replace(/\ufeff/g, '')
-        .replace(/\n{3,}/g, '\n\n');
-
-      if (!story.trim()) {
-        return { ok:false, error:'Đã tìm thấy mốc nhưng nội dung giữa 2 mốc rỗng.' };
-      }
-
-      return { ok:true, text:story, endMarkerUsed };
-    }
-
-    function getExtraRemovePhrases(){
-      const raw = (els.extraRemovePhrases && els.extraRemovePhrases.value) ? els.extraRemovePhrases.value : '';
-      return normalizeNewlines(raw)
-        .split('\n')
-        .map(s => s.trim())
-        .filter(Boolean);
-    }
-
-    function applyCustomPhraseRemovals(text, phrases){
-      let t = String(text || '');
-      if (!Array.isArray(phrases) || !phrases.length) return t;
-
-      for (const phrase of phrases){
-        const p = String(phrase || '').trim();
-        if (!p) continue;
-        const rx = new RegExp(escapeRegExp(p), 'gi');
-        t = t.replace(rx, '');
-      }
-
-      // Dọn lại khoảng trắng sau khi xóa cụm từ
-      t = t
-        .replace(/[ \t]{2,}/g, ' ')
-        .replace(/\n[ \t]+/g, '\n')
-        .replace(/[ \t]+\n/g, '\n')
-        .replace(/\n{3,}/g, '\n\n');
-
-      return t;
-    }
-
-    function removeCommonNoise(text, extraPhrases = []){
-      let t = normalizeNewlines(text);
-
-      // Xóa một số dòng rác phổ biến nếu còn lọt vào
-      const linePatterns = [
-        /^\s*Truyện được đăng tại\s*https?:\/\/\S+.*$/gim,
-        /^\s*Trang chủ\s+Thế giới\s+Tìm Truyện.*$/gim,
-        /^\s*Cáp biển APG.*$/gim,
-        /^\s*Xem bình luận.*$/gim,
-        /^\s*BÌNH LUẬN\s*$/gim,
-        /^\s*sangtacviet\.com.*$/gim,
-        /^\s*\d+\s*Online\s*$/gim,
-        /^\s*Chương trước\s*Mục lục\s*Chương sau\s*$/gim
-      ];
-
-      for (const p of linePatterns) t = t.replace(p, '');
-
-      // Xóa cụm từ tùy chỉnh (mỗi dòng 1 cụm trong phần Tùy chỉnh mốc)
-      t = applyCustomPhraseRemovals(t, extraPhrases);
-
-      t = t
-        .replace(/[ \t]+\n/g, '\n')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
-
-      return t;
-    }
-
-    function oneClickCleanChapter(rawText){
-      const start = els.startMarker.value || '@Bạn đang đọc bản lưu trong hệ thống';
-      const end = els.endMarker.value || 'Chương trước';
-      const endPriority = getEndMarkerPriorityList();
-
-      const ext = extractStoryContentRobust(rawText, start, end, endPriority);
-      if (!ext.ok) return ext;
-
-      let t = ext.text;
-      const extraPhrases = getExtraRemovePhrases();
-      t = removeCommonNoise(t, extraPhrases);
-
-      return { ok:true, text:t };
-    }
-
-    function runExtract(){
-      const start = els.startMarker.value || '@Bạn đang đọc bản lưu trong hệ thống';
-      const end = els.endMarker.value || 'Chương trước';
-      const endPriority = getEndMarkerPriorityList();
-
-      const res = extractStoryContentRobust(els.input.value, start, end, endPriority);
-      if (!res.ok) {
-        els.output.value = '';
-        updateStats();
-        setStatus('❌ ' + res.error, 'err');
-        return;
-      }
-
-      els.output.value = res.text;
-      updateStats();
-      setStatus(`✅ Đã lấy đoạn truyện thành công (mốc dừng: <b>${res.endMarkerUsed || 'không rõ'}</b>). <b>${res.text.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
-    }
-
-    function runOneClickClean(){
-      const res = oneClickCleanChapter(els.input.value);
-      if (!res.ok) {
-        els.output.value = '';
-        updateStats();
-        setStatus('❌ ' + res.error, 'err');
-        return;
-      }
-
-      els.output.value = res.text;
-      updateStats();
-      setStatus(`✅ Làm sạch 1 chạm thành công (mốc dừng: <b>${res.endMarkerUsed || 'không rõ'}</b>). <b>${res.text.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
-    }
-
-    async function copyOutput(){
-      const text = els.output.value;
-      if (!text) {
-        setStatus('⚠️ Chưa có kết quả để copy.', 'warn');
-        return;
-      }
-      try{
-        await navigator.clipboard.writeText(text);
-        setStatus('✅ Đã copy kết quả vào clipboard.', 'ok');
-      }catch(e){
-        // Fallback
-        els.output.select();
-        document.execCommand('copy');
-        setStatus('✅ Đã copy kết quả (fallback).', 'ok');
+  }
+  if (fallbackMarker && String(fallbackMarker).trim()){
+    const re = markerToRegex(String(fallbackMarker).trim());
+    if (re){
+      const match = re.exec(text);
+      if (match){
+        return { ok:true, markerText:String(fallbackMarker).trim(), match, source:'fallback' };
       }
     }
+  }
+  return { ok:false, error:`Không tìm thấy mốc ${kind === 'start' ? 'bắt đầu' : 'kết thúc'}.` };
+}
+function extractStoryContentPriority(rawText){
+  if (!rawText || typeof rawText !== 'string') return { ok:false, error:'Không có dữ liệu văn bản.' };
+  const text = normalizeNewlines(rawText);
 
-    function downloadTxt(){
-      const text = els.output.value;
-      if (!text) {
-        setStatus('⚠️ Chưa có kết quả để tải TXT.', 'warn');
-        return;
-      }
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const now = new Date();
-      const pad = n => String(n).padStart(2,'0');
-      const name = `chuong_sach_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.txt`;
-      a.href = url;
-      a.download = name;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      setStatus('✅ Đã tải file TXT kết quả.', 'ok');
-    }
+  const startRes = findMarkerByPriority(text, parseLines(els.startMarkersPriority.value), els.startMarker.value || '@Bạn đang đọc bản lưu trong hệ thống', 'start');
+  if (!startRes.ok) return { ok:false, error:startRes.error + ' (Kiểm tra danh sách mốc bắt đầu.)' };
 
-    async function pasteInput(){
-      try{
-        const txt = await navigator.clipboard.readText();
-        if (!txt) {
-          setStatus('⚠️ Clipboard không có văn bản.', 'warn');
-          return;
-        }
-        els.input.value = txt;
-        updateStats();
-        setStatus('✅ Đã dán văn bản từ clipboard.', 'ok');
-      }catch(e){
-        setStatus('⚠️ Trình duyệt chặn đọc clipboard. Hãy dán thủ công vào ô bên trái.', 'warn');
-      }
-    }
+  const startIndex = startRes.match.index + startRes.match[0].length;
+  const afterStart = text.slice(startIndex);
 
-    function openTextFile(file){
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        els.input.value = String(e.target.result || '');
-        updateStats();
-        setStatus(`✅ Đã mở file: <b>${file.name}</b>`, 'ok');
-      };
-      reader.onerror = () => {
-        setStatus('❌ Không đọc được file TXT.', 'err');
-      };
-      reader.readAsText(file, 'utf-8');
-    }
+  const endRes = findMarkerByPriority(afterStart, parseLines(els.endMarkersPriority.value), els.endMarker.value || 'Chương trước', 'end');
+  if (!endRes.ok) return { ok:false, error:endRes.error + ' (Kiểm tra danh sách mốc kết thúc.)' };
 
-    // Sự kiện nút
-    els.btnExtract.addEventListener('click', runExtract);
-    els.btnOneClick.addEventListener('click', runOneClickClean);
-    els.btnCopy.addEventListener('click', copyOutput);
-    els.btnDownloadTxt.addEventListener('click', downloadTxt);
+  let story = afterStart.slice(0, endRes.match.index)
+    .replace(/^\s+/, '')
+    .replace(/\s+$/, '')
+    .replace(/\u200B/g, '')
+    .replace(/\ufeff/g, '')
+    .replace(/\n{3,}/g, '\n\n');
 
-    els.btnSwap.addEventListener('click', () => {
-      if (!els.output.value) {
-        setStatus('⚠️ Chưa có kết quả để đưa lên ô trên.', 'warn');
-        return;
-      }
-      els.input.value = els.output.value;
-      els.output.value = '';
-      updateStats();
-      setStatus('✅ Đã đưa kết quả lên ô trên (để xử lý tiếp).', 'ok');
-    });
+  if (!story.trim()) return { ok:false, error:'Đã tìm thấy mốc nhưng nội dung giữa 2 mốc rỗng.' };
 
-    els.btnClearAll.addEventListener('click', () => {
-      els.input.value = '';
-      els.output.value = '';
-      updateStats();
-      setStatus('🧹 Đã xóa toàn bộ nội dung.', '');
-    });
+  return {
+    ok:true, text:story,
+    usedStart:startRes.markerText, usedStartSource:startRes.source,
+    usedEnd:endRes.markerText, usedEndSource:endRes.source
+  };
+}
+function removeExtraPhrases(text){
+  let t = normalizeNewlines(text);
+  for (const ph of parseLines(els.extraRemovePhrases.value)){
+    t = t.replace(new RegExp(escapeRegExp(ph), 'gi'), '');
+  }
+  return t;
+}
+function removeCommonNoise(text){
+  let t = normalizeNewlines(text);
+  const patterns = [
+    /^\s*Truyện được đăng tại\s*https?:\/\/\S+.*$/gim,
+    /^\s*Trang chủ\s+Thế giới\s+Tìm Truyện.*$/gim,
+    /^\s*Cáp biển APG.*$/gim,
+    /^\s*Xem bình luận.*$/gim,
+    /^\s*BÌNH LUẬN\s*$/gim,
+    /^\s*sangtacviet\.com.*$/gim,
+    /^\s*\d+\s*Online\s*$/gim,
+    /^\s*Chương trước\s*Mục lục\s*Chương sau\s*$/gim
+  ];
+  for (const p of patterns) t = t.replace(p, '');
+  t = removeExtraPhrases(t);
+  return t.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+function runExtract(){
+  const res = extractStoryContentPriority(els.input.value);
+  if (!res.ok){ els.output.value=''; updateStats(); setStatus('❌ ' + res.error, 'err'); return; }
+  els.output.value = res.text; updateStats();
+  setStatus(`✅ Đã lấy đoạn truyện. Start: <b>${res.usedStart}</b> (${res.usedStartSource}) • End: <b>${res.usedEnd}</b> (${res.usedEndSource}) • <b>${res.text.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
+}
+function runOneClickClean(){
+  const res = extractStoryContentPriority(els.input.value);
+  if (!res.ok){ els.output.value=''; updateStats(); setStatus('❌ ' + res.error, 'err'); return; }
+  els.output.value = removeCommonNoise(res.text); updateStats();
+  setStatus(`✅ Làm sạch 1 chạm xong. Start: <b>${res.usedStart}</b> • End: <b>${res.usedEnd}</b> • <b>${els.output.value.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
+}
+async function copyOutput(){
+  if (!els.output.value){ setStatus('⚠️ Chưa có kết quả để copy.', 'warn'); return; }
+  try{ await navigator.clipboard.writeText(els.output.value); setStatus('✅ Đã copy kết quả.', 'ok'); }
+  catch(e){
+    try{
+      els.output.removeAttribute('readonly'); els.output.focus(); els.output.select(); document.execCommand('copy'); els.output.setAttribute('readonly','');
+      setStatus('✅ Đã copy kết quả (fallback).', 'ok');
+    }catch{ setStatus('⚠️ Không copy được. Hãy copy thủ công.', 'warn'); }
+  }
+}
+function downloadTxt(){
+  if (!els.output.value){ setStatus('⚠️ Chưa có kết quả để tải TXT.', 'warn'); return; }
+  const blob = new Blob([els.output.value], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date(), pad=n=>String(n).padStart(2,'0');
+  a.href = url;
+  a.download = `chuong_sach_v4_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.txt`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  setStatus('✅ Đã tải file TXT kết quả.', 'ok');
+}
+async function pasteInput(){
+  try{
+    const txt = await navigator.clipboard.readText();
+    if (!txt){ setStatus('⚠️ Clipboard không có văn bản.', 'warn'); return; }
+    els.input.value = txt; updateStats(); setStatus('✅ Đã dán văn bản từ clipboard.', 'ok');
+  }catch{ setStatus('⚠️ Trình duyệt chặn đọc clipboard. Hãy dán thủ công.', 'warn'); }
+}
+function openTextFile(file){
+  const reader = new FileReader();
+  reader.onload = e => { els.input.value = String(e.target.result || ''); updateStats(); setStatus(`✅ Đã mở file: <b>${file.name}</b>`, 'ok'); };
+  reader.onerror = () => setStatus('❌ Không đọc được file TXT.', 'err');
+  reader.readAsText(file, 'utf-8');
+}
 
-    els.btnPaste.addEventListener('click', pasteInput);
+els.btnExtract.addEventListener('click', runExtract);
+els.btnOneClick.addEventListener('click', runOneClickClean);
+els.btnCopy.addEventListener('click', copyOutput);
+els.btnDownloadTxt.addEventListener('click', downloadTxt);
+els.btnSwap.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để đưa lên ô trên.', 'warn');return;} els.input.value=els.output.value; els.output.value=''; updateStats(); setStatus('✅ Đã đưa kết quả lên ô trên.', 'ok'); });
+els.btnClearAll.addEventListener('click', ()=>{ els.input.value=''; els.output.value=''; updateStats(); setStatus('🧹 Đã xóa toàn bộ nội dung.', ''); });
+els.btnPaste.addEventListener('click', pasteInput);
+els.btnTrimInput.addEventListener('click', ()=>{ els.input.value = els.input.value.trim(); updateStats(); setStatus('✅ Đã xóa khoảng trắng đầu/cuối input.', 'ok'); });
+els.btnNormalize.addEventListener('click', ()=>{ els.input.value = normalizeNewlines(els.input.value); updateStats(); setStatus('✅ Đã chuẩn hóa xuống dòng.', 'ok'); });
+els.btnSelectOutput.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để chọn.', 'warn');return;} els.output.removeAttribute('readonly'); els.output.focus(); els.output.select(); els.output.setAttribute('readonly',''); setStatus('✅ Đã chọn toàn bộ kết quả.', 'ok'); });
+els.btnRemoveBlankLines.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để xử lý.', 'warn');return;} els.output.value = els.output.value.replace(/\n{3,}/g,'\n\n').trim(); updateStats(); setStatus('✅ Đã gộp dòng trống dư.', 'ok'); });
+els.btnRemoveWatermark.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để xử lý.', 'warn');return;} els.output.value = removeCommonNoise(els.output.value); updateStats(); setStatus('✅ Đã xóa watermark phổ biến + cụm từ xóa thêm.', 'ok'); });
 
-    els.btnTrimInput.addEventListener('click', () => {
-      els.input.value = els.input.value.trim();
-      updateStats();
-      setStatus('✅ Đã xóa khoảng trắng đầu/cuối của ô input.', 'ok');
-    });
+els.fileInput.addEventListener('change', e => { const file = e.target.files && e.target.files[0]; if(file) openTextFile(file); e.target.value=''; });
+['dragenter','dragover'].forEach(evt => els.dropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); els.dropZone.classList.add('drag'); }));
+['dragleave','drop'].forEach(evt => els.dropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); els.dropZone.classList.remove('drag'); }));
+els.dropZone.addEventListener('drop', e => {
+  const file = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!file) return;
+  if (!/\.txt$/i.test(file.name) && file.type !== 'text/plain'){ setStatus('⚠️ Vui lòng thả file .txt', 'warn'); return; }
+  openTextFile(file);
+});
 
-    els.btnNormalize.addEventListener('click', () => {
-      els.input.value = normalizeNewlines(els.input.value);
-      updateStats();
-      setStatus('✅ Đã chuẩn hóa xuống dòng.', 'ok');
-    });
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter'){ e.preventDefault(); runExtract(); }
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l'){ e.preventDefault(); runOneClickClean(); }
+});
 
-    els.btnSelectOutput.addEventListener('click', () => {
-      if (!els.output.value) {
-        setStatus('⚠️ Chưa có kết quả để chọn.', 'warn');
-        return;
-      }
-      els.output.removeAttribute('readonly');
-      els.output.focus();
-      els.output.select();
-      els.output.setAttribute('readonly', '');
-      setStatus('✅ Đã chọn toàn bộ kết quả.', 'ok');
-    });
-
-    els.btnRemoveBlankLines.addEventListener('click', () => {
-      if (!els.output.value) {
-        setStatus('⚠️ Chưa có kết quả để xử lý.', 'warn');
-        return;
-      }
-      els.output.value = els.output.value.replace(/\n{3,}/g, '\n\n').trim();
-      updateStats();
-      setStatus('✅ Đã gộp dòng trống dư trong kết quả.', 'ok');
-    });
-
-    els.btnRemoveWatermark.addEventListener('click', () => {
-      if (!els.output.value) {
-        setStatus('⚠️ Chưa có kết quả để xử lý.', 'warn');
-        return;
-      }
-      const extraPhrases = getExtraRemovePhrases();
-      els.output.value = removeCommonNoise(els.output.value, extraPhrases);
-      updateStats();
-      setStatus('✅ Đã xóa watermark/dòng rác phổ biến + cụm từ tùy chỉnh trong kết quả.', 'ok');
-    });
-
-    // File input
-    els.fileInput.addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (file) openTextFile(file);
-      e.target.value = '';
-    });
-
-    // Drag & drop
-    ['dragenter','dragover'].forEach(evt => {
-      els.dropZone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        els.dropZone.classList.add('drag');
-      });
-    });
-
-    ['dragleave','drop'].forEach(evt => {
-      els.dropZone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        els.dropZone.classList.remove('drag');
-      });
-    });
-
-    els.dropZone.addEventListener('drop', (e) => {
-      const file = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (!file) return;
-      if (!/\.txt$/i.test(file.name) && file.type !== 'text/plain') {
-        setStatus('⚠️ Vui lòng thả file .txt', 'warn');
-        return;
-      }
-      openTextFile(file);
-    });
-
-    // Phím tắt
-    document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key === 'Enter') {
-        e.preventDefault();
-        runExtract();
-      }
-      if (e.ctrlKey && e.shiftKey && (e.key.toLowerCase() === 'l')) {
-        e.preventDefault();
-        runOneClickClean();
-      }
-    });
-
-    // Cập nhật thống kê realtime
-    els.input.addEventListener('input', updateStats);
-    els.output.addEventListener('input', updateStats);
-
-    updateStats();
-  </script>
+els.input.addEventListener('input', updateStats);
+els.output.addEventListener('input', updateStats);
+updateStats();
+</script>
 </body>
 </html>
