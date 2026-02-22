@@ -68,7 +68,7 @@
 <div class="wrap">
   <div class="header">
     <div>
-      <div class="title">Tool cắt & làm sạch chương truyện (v8)</div>
+      <div class="title">Tool cắt & làm sạch chương truyện (v9)</div>
       <div class="subtitle">Hỗ trợ <b>mốc bắt đầu</b> và <b>mốc kết thúc</b> theo <b>thứ tự ưu tiên</b> • mỗi dòng 1 mốc • <b>tự lưu cài đặt mốc</b> • <b>tự nhớ tên file TXT</b> • <b>tự tăng số tên file</b></div>
     </div>
     <div class="stats">
@@ -179,8 +179,8 @@ uukanshu
     <div id="status" class="status">Sẵn sàng. Dán văn bản vào ô bên trái rồi bấm <b>Lấy đoạn truyện</b> hoặc <b>Làm sạch 1 chạm</b>.</div>
 
     <div class="footer">
-      <div>✅ Offline • ✅ GitHub Pages • ✅ Ưu tiên mốc bắt đầu/kết thúc theo thứ tự • ✅ Tự lưu mốc • ✅ Tự nhớ tên file TXT • ✅ Tự tăng số tên file</div>
-      <div class="mono">v8-auto-increment-filename</div>
+      <div>✅ Offline • ✅ GitHub Pages • ✅ Ưu tiên mốc bắt đầu/kết thúc theo thứ tự • ✅ Tự lưu mốc • ✅ Tự nhớ tên file TXT • ✅ Tự tăng số tên file • ✅ Tự xóa sau khi tải</div>
+      <div class="mono">v9-auto-clear-after-download</div>
     </div>
   </div>
 </div>
@@ -515,10 +515,15 @@ function downloadTxt(){
   a.remove();
   URL.revokeObjectURL(url);
 
+  // Tự xóa nội dung sau khi tải xong (giữ lại cài đặt mốc / tên file / bộ đếm)
+  els.input.value = '';
+  els.output.value = '';
+  updateStats();
+
   if (autoInfo){
-    setStatus(`✅ Đã tải file TXT: <b>${fileName}</b> • Tự tăng số: <b>${autoInfo.count}</b>`, 'ok');
+    setStatus(`✅ Đã tải file TXT: <b>${fileName}</b> • Tự tăng số: <b>${autoInfo.count}</b> • Đã tự xóa nội dung`, 'ok');
   } else {
-    setStatus(`✅ Đã tải file TXT: <b>${fileName}</b>`, 'ok');
+    setStatus(`✅ Đã tải file TXT: <b>${fileName}</b> • Đã tự xóa nội dung`, 'ok');
   }
 }
 async function pasteInput(){
