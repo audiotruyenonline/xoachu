@@ -26,6 +26,12 @@
     .btn.success{background:linear-gradient(180deg,#1e7c62,#16624f);border-color:#279a7b}
     .btn.warn{background:linear-gradient(180deg,#8d6120,#6f4b16);border-color:#b37b28}
     .btn.ghost{background:transparent}
+    .toolbar .mini-input{
+      width:220px; max-width:100%; padding:10px 12px; border-radius:12px;
+      border:1px solid var(--line); background:#0f1728; color:var(--text);
+      font-size:13px;
+    }
+    .toolbar .mini-input::placeholder{color:var(--muted)}
     .pill{margin-left:auto;color:var(--muted);font-size:12px;background:var(--chip);border:1px solid var(--line);padding:6px 10px;border-radius:999px;white-space:nowrap}
     input[type="file"]{display:none}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
@@ -62,8 +68,8 @@
 <div class="wrap">
   <div class="header">
     <div>
-      <div class="title">Tool cắt & làm sạch chương truyện (v6)</div>
-      <div class="subtitle">Hỗ trợ <b>mốc bắt đầu</b> và <b>mốc kết thúc</b> theo <b>thứ tự ưu tiên</b> • mỗi dòng 1 mốc • <b>tự lưu cài đặt mốc</b></div>
+      <div class="title">Tool cắt & làm sạch chương truyện (v8)</div>
+      <div class="subtitle">Hỗ trợ <b>mốc bắt đầu</b> và <b>mốc kết thúc</b> theo <b>thứ tự ưu tiên</b> • mỗi dòng 1 mốc • <b>tự lưu cài đặt mốc</b> • <b>tự nhớ tên file TXT</b> • <b>tự tăng số tên file</b></div>
     </div>
     <div class="stats">
       <div class="chip" id="statInput">Input: 0 ký tự</div>
@@ -77,11 +83,17 @@
       <button class="btn success" id="btnOneClick">Làm sạch 1 chạm</button>
       <button class="btn" id="btnCopy">Copy kết quả</button>
       <button class="btn warn" id="btnDownloadTxt">Tải TXT</button>
+      <input id="txtFileName" class="mini-input" type="text" placeholder="Tên file TXT (tự nhớ)">
+      <label class="chip" style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input id="autoIncrementName" type="checkbox" checked style="width:auto;margin:0">
+        Tự tăng số
+      </label>
+      <button class="btn ghost" id="btnResetNameCounter" type="button">Reset số</button>
       <button class="btn ghost" id="btnSwap">Đưa kết quả lên ô trên</button>
       <button class="btn ghost" id="btnClearAll">Xóa tất cả</button>
       <label class="btn" for="fileInput">Mở file .txt</label>
       <input id="fileInput" type="file" accept=".txt,text/plain">
-      <span class="pill">Mẹo: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> = Lấy đoạn • mốc tự lưu</span>
+      <span class="pill">Mẹo: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> = Lấy đoạn • mốc/tên file/bộ đếm tự lưu</span>
     </div>
 
     <details>
@@ -116,7 +128,7 @@ Chương sau</textarea>
         </div>
 
         <div class="field">
-          <div class="small">✅ Các ô mốc bắt đầu / mốc kết thúc / cụm từ xóa thêm sẽ tự lưu trên trình duyệt (localStorage). Tải lại trang vẫn còn.</div>
+          <div class="small">✅ Các ô mốc bắt đầu / mốc kết thúc / cụm từ xóa thêm / tên file TXT / bật-tắt tự tăng số sẽ tự lưu trên trình duyệt (localStorage). Tải lại trang vẫn còn.</div>
           <label>Cụm từ xóa thêm (mỗi dòng 1 cụm, áp dụng trong “Làm sạch 1 chạm” và “Xóa watermark phổ biến”)</label>
           <textarea id="extraRemovePhrases" rows="12">Chương trước
 Mục lục
@@ -167,8 +179,8 @@ uukanshu
     <div id="status" class="status">Sẵn sàng. Dán văn bản vào ô bên trái rồi bấm <b>Lấy đoạn truyện</b> hoặc <b>Làm sạch 1 chạm</b>.</div>
 
     <div class="footer">
-      <div>✅ Offline • ✅ GitHub Pages • ✅ Ưu tiên mốc bắt đầu/kết thúc theo thứ tự • ✅ Tự lưu mốc</div>
-      <div class="mono">v6-localstorage-marker-settings</div>
+      <div>✅ Offline • ✅ GitHub Pages • ✅ Ưu tiên mốc bắt đầu/kết thúc theo thứ tự • ✅ Tự lưu mốc • ✅ Tự nhớ tên file TXT • ✅ Tự tăng số tên file</div>
+      <div class="mono">v8-auto-increment-filename</div>
     </div>
   </div>
 </div>
@@ -200,22 +212,29 @@ const els = {
   btnRemoveBlankLines: document.getElementById('btnRemoveBlankLines'),
   btnRemoveWatermark: document.getElementById('btnRemoveWatermark'),
   btnSaveSettingsNow: document.getElementById('btnSaveSettingsNow'),
-  btnResetSavedSettings: document.getElementById('btnResetSavedSettings')
+  btnResetSavedSettings: document.getElementById('btnResetSavedSettings'),
+  txtFileName: document.getElementById('txtFileName'),
+  autoIncrementName: document.getElementById('autoIncrementName'),
+  btnResetNameCounter: document.getElementById('btnResetNameCounter')
 
 };
 
 // ===== localStorage: lưu cài đặt mốc / cụm từ xóa thêm =====
-const STORAGE_KEY = 'tool_cat_doan_truyen_settings_v6';
+const STORAGE_KEY = 'tool_cat_doan_truyen_settings_v8';
+const FILE_COUNTER_MAP_KEY = 'tool_cat_doan_truyen_filename_counters_v8';
 
 function getSettingsFields(){
-  return ['startMarker','endMarker','startMarkersPriority','endMarkersPriority','extraRemovePhrases'];
+  return ['startMarker','endMarker','startMarkersPriority','endMarkersPriority','extraRemovePhrases','txtFileName','autoIncrementName'];
 }
 
 function saveSettingsToLocal(){
   try{
     const data = {};
     for (const key of getSettingsFields()){
-      if (els[key]) data[key] = els[key].value ?? '';
+      if (!els[key]) continue;
+      const el = els[key];
+      if (el.type === 'checkbox') data[key] = !!el.checked;
+      else data[key] = el.value ?? '';
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }catch(err){}
@@ -229,10 +248,16 @@ function loadSettingsFromLocal(){
     if (!data || typeof data !== 'object') return false;
     let restored = 0;
     for (const key of getSettingsFields()){
-      if (els[key] && typeof data[key] === 'string'){
-        els[key].value = data[key];
-        restored++;
+      if (!els[key] || !(key in data)) continue;
+      const el = els[key];
+      if (el.type === 'checkbox') {
+        el.checked = !!data[key];
+      } else if (typeof data[key] === 'string') {
+        el.value = data[key];
+      } else {
+        continue;
       }
+      restored++;
     }
     return restored > 0;
   }catch(err){
@@ -248,10 +273,79 @@ function bindAutoSaveSettings(){
   }
 }
 
+function loadFileCounterMap(){
+  try{
+    const raw = localStorage.getItem(FILE_COUNTER_MAP_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    return (data && typeof data === 'object') ? data : {};
+  }catch(err){
+    return {};
+  }
+}
+
+function saveFileCounterMap(map){
+  try{
+    localStorage.setItem(FILE_COUNTER_MAP_KEY, JSON.stringify(map || {}));
+  }catch(err){}
+}
+
+function splitFileNameParts(fileName){
+  const m = String(fileName || '').match(/^(.*?)(\.[^.]+)?$/);
+  return {
+    stem: (m && m[1]) ? m[1] : 'chuong_sach',
+    ext: (m && m[2]) ? m[2] : '.txt'
+  };
+}
+
+// Tự tăng: truyenchu.txt -> truyenchu1.txt -> truyenchu2.txt...
+function getAutoIncrementFileName(fileName){
+  const p = splitFileNameParts(fileName);
+  // Nếu ô tên file đang là truyenchu12.txt thì coi "truyenchu" là gốc để tăng tiếp
+  let baseStem = p.stem.replace(/\d+$/,'').trim();
+  if (!baseStem) baseStem = p.stem || 'chuong_sach';
+
+  const key = (baseStem + p.ext).toLowerCase();
+  const map = loadFileCounterMap();
+  const next = (Number(map[key]) || 0) + 1;
+  map[key] = next;
+  saveFileCounterMap(map);
+
+  return {
+    fileName: `${baseStem}${next}${p.ext}`,
+    baseStem,
+    ext: p.ext,
+    count: next,
+    key
+  };
+}
+
+function resetCurrentFileCounter(){
+  try{
+    const rawName = (els.txtFileName && els.txtFileName.value) ? els.txtFileName.value : getDefaultTxtFileName();
+    const cleanName = sanitizeFileName(rawName);
+    const p = splitFileNameParts(cleanName);
+    let baseStem = p.stem.replace(/\d+$/,'').trim();
+    if (!baseStem) baseStem = p.stem || 'chuong_sach';
+    const key = (baseStem + p.ext).toLowerCase();
+
+    const map = loadFileCounterMap();
+    delete map[key];
+    saveFileCounterMap(map);
+
+    if (els.txtFileName){
+      els.txtFileName.value = `${baseStem}${p.ext}`;
+      try { saveSettingsToLocal(); } catch(e) {}
+    }
+    setStatus(`✅ Đã reset số tự tăng cho tên gốc: <b>${baseStem}${p.ext}</b>`, 'ok');
+  }catch(err){
+    setStatus('⚠️ Không reset được số tự tăng.', 'warn');
+  }
+}
+
 function resetSavedSettings(){
   try{
     localStorage.removeItem(STORAGE_KEY);
-    setStatus('🗑️ Đã xóa cài đặt mốc đã lưu trên trình duyệt. Tải lại trang để về mặc định.', 'ok');
+    setStatus('🗑️ Đã xóa cài đặt mốc/tên file đã lưu trên trình duyệt. (Bộ đếm số file vẫn giữ, dùng nút Reset số để reset riêng.)', 'ok');
   }catch(err){
     setStatus('⚠️ Không xóa được cài đặt lưu trên trình duyệt.', 'warn');
   }
@@ -373,16 +467,59 @@ async function copyOutput(){
     }catch{ setStatus('⚠️ Không copy được. Hãy copy thủ công.', 'warn'); }
   }
 }
+function getDefaultTxtFileName(){
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `chuong_sach_v7_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.txt`;
+}
+
+function sanitizeFileName(name){
+  let n = String(name || '').trim();
+  n = n.replace(/[\\/:*?"<>|]/g, '_'); // ký tự không hợp lệ
+  n = n.replace(/\s+/g, ' ').trim();
+  if (!n) n = getDefaultTxtFileName();
+  if (!/\.txt$/i.test(n)) n += '.txt';
+  return n;
+}
+
 function downloadTxt(){
-  if (!els.output.value){ setStatus('⚠️ Chưa có kết quả để tải TXT.', 'warn'); return; }
+  if (!els.output.value){
+    setStatus('⚠️ Chưa có kết quả để tải TXT.', 'warn');
+    return;
+  }
+
+  const rawName = (els.txtFileName && els.txtFileName.value) ? els.txtFileName.value : '';
+  const cleanedBaseName = sanitizeFileName(rawName || getDefaultTxtFileName());
+
+  let fileName = cleanedBaseName;
+  let autoInfo = null;
+
+  if (els.autoIncrementName && els.autoIncrementName.checked){
+    autoInfo = getAutoIncrementFileName(cleanedBaseName);
+    fileName = autoInfo.fileName;
+  }
+
+  if (els.txtFileName){
+    // Hiển thị tên vừa tải (lần sau vẫn tăng tiếp nhờ bộ đếm localStorage)
+    els.txtFileName.value = fileName;
+    try { saveSettingsToLocal(); } catch(e) {}
+  }
+
   const blob = new Blob([els.output.value], {type:'text/plain;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const d = new Date(), pad=n=>String(n).padStart(2,'0');
   a.href = url;
-  a.download = `chuong_sach_v4_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.txt`;
-  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-  setStatus('✅ Đã tải file TXT kết quả.', 'ok');
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  if (autoInfo){
+    setStatus(`✅ Đã tải file TXT: <b>${fileName}</b> • Tự tăng số: <b>${autoInfo.count}</b>`, 'ok');
+  } else {
+    setStatus(`✅ Đã tải file TXT: <b>${fileName}</b>`, 'ok');
+  }
 }
 async function pasteInput(){
   try{
@@ -442,10 +579,18 @@ if (els.btnSaveSettingsNow){
 if (els.btnResetSavedSettings){
   els.btnResetSavedSettings.addEventListener('click', resetSavedSettings);
 }
+if (els.btnResetNameCounter){
+  els.btnResetNameCounter.addEventListener('click', resetCurrentFileCounter);
+}
 
 updateStats();
+if (els.txtFileName && !String(els.txtFileName.value || '').trim()){
+  els.txtFileName.value = 'truyenchu.txt';
+  try { saveSettingsToLocal(); } catch(e) {}
+}
+
 if (__restoredSettings){
-  setStatus('✅ Đã khôi phục cài đặt mốc đã lưu từ lần trước.', 'ok');
+  setStatus('✅ Đã khôi phục cài đặt mốc/tên file/tự tăng số đã lưu từ lần trước.', 'ok');
 }
 </script>
 </body>
