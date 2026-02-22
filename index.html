@@ -62,13 +62,111 @@
     .footer{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;color:var(--muted);font-size:12px;padding:10px 12px 14px;border-top:1px dashed var(--line)}
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
     .kbd{border:1px solid var(--line);padding:1px 6px;border-radius:6px;background:#0e1729;font-size:11px;color:#c9daff}
+    .appbar{
+      position:sticky; top:0; z-index:50;
+      display:flex; align-items:center; gap:10px;
+      margin-bottom:10px; padding:10px 12px;
+      border:1px solid var(--line); border-radius:14px;
+      background:rgba(11,18,32,.88); backdrop-filter: blur(8px);
+      box-shadow:0 8px 22px rgba(0,0,0,.2);
+    }
+    .appbar .appbar-title{font-weight:700}
+    .appbar .appbar-sub{font-size:12px;color:var(--muted)}
+    .hamburger{
+      width:42px;height:42px;border-radius:12px;border:1px solid var(--line);
+      background:#16213a;color:var(--text);cursor:pointer;
+      display:grid;place-items:center;font-size:20px;line-height:1;
+      flex:0 0 auto;
+    }
+    .hamburger:hover{border-color:#3b6dc4;transform:translateY(-1px)}
+    .drawer-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:80;
+    }
+    .drawer-backdrop.show{opacity:1; pointer-events:auto}
+    .drawer-panel{
+      position:fixed; top:0; left:0; height:100vh; width:min(94vw,460px);
+      transform:translateX(-100%); transition:transform .24s ease;
+      z-index:90; display:flex; flex-direction:column;
+      background:linear-gradient(180deg,#0f1728,#0b1220);
+      border-right:1px solid var(--line); box-shadow:14px 0 32px rgba(0,0,0,.35);
+    }
+    .drawer-panel.show{transform:translateX(0)}
+    .drawer-head{
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      padding:12px; border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.01);
+    }
+    .drawer-title{font-size:15px;font-weight:700}
+    .drawer-close{
+      width:36px;height:36px;border-radius:10px;border:1px solid var(--line);
+      background:#16213a;color:var(--text);cursor:pointer;
+    }
+    .drawer-body{padding:12px; overflow:auto; display:grid; gap:12px}
+    .drawer-card{
+      border:1px solid var(--line); border-radius:14px; background:#10192c;
+      padding:10px;
+    }
+    .drawer-card h4{margin:0 0 8px;font-size:14px}
+    .drawer-actions{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px}
+    .drawer-list{
+      border:1px solid var(--line); border-radius:10px; background:#0b1322;
+      padding:8px; max-height:120px; overflow:auto; font-size:12px; color:var(--muted);
+    }
+    .drawer-list .item{padding:4px 2px; border-bottom:1px dashed rgba(255,255,255,.07)}
+    .drawer-list .item:last-child{border-bottom:none}
+    .drawer-txt{
+      min-height:180px; resize:vertical; width:100%;
+      border:1px solid var(--line); border-radius:12px; background:#0b1322; color:var(--text);
+      padding:10px; line-height:1.5;
+    }
+    .drawer-note{font-size:12px; color:var(--muted)}
+
   </style>
 </head>
 <body>
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer-panel" id="drawerPanel" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <div class="drawer-title">☰ Không gian TXT</div>
+      <div class="drawer-note">Chọn nhiều tệp TXT, gộp làm 1 và copy luôn</div>
+    </div>
+    <button class="drawer-close" id="btnCloseDrawer" type="button" aria-label="Đóng">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-card">
+      <h4>📂 Chọn TXT (nhiều tệp cùng lúc)</h4>
+      <div class="drawer-actions">
+        <label class="btn" for="multiTxtFileInput">Chọn nhiều TXT</label>
+        <input id="multiTxtFileInput" type="file" accept=".txt,text/plain" multiple style="display:none">
+        <button class="btn" id="btnCopyPanelTxt" type="button">Copy ô TXT</button>
+        <button class="btn ghost" id="btnSendPanelToInput" type="button">Đưa vào ô văn bản gốc</button>
+        <button class="btn ghost" id="btnClearPanelTxt" type="button">Xóa ô TXT</button>
+      </div>
+      <div class="drawer-note">Tool sẽ giữ đúng thứ tự tệp theo danh sách trả về từ trình chọn file (thường là thứ tự bạn chọn).</div>
+      <div class="drawer-list" id="multiTxtFileList">Chưa chọn tệp TXT nào.</div>
+    </div>
+
+    <div class="drawer-card">
+      <h4>📝 Ô văn bản TXT (gộp để copy)</h4>
+      <textarea id="multiTxtTextarea" class="drawer-txt" placeholder="Sau khi chọn nhiều file TXT, nội dung gộp sẽ hiện ở đây để bạn copy 1 lần..."></textarea>
+      <div class="drawer-note" id="multiTxtMeta">Tổng: 0 tệp • 0 ký tự</div>
+    </div>
+  </div>
+</aside>
+
 <div class="wrap">
+  <div class="appbar">
+    <button class="hamburger" id="btnOpenDrawer" type="button" aria-label="Mở không gian TXT">☰</button>
+    <div>
+      <div class="appbar-title">Menu nhanh TXT</div>
+      <div class="appbar-sub">Bấm 3 gạch ngang để vào không gian riêng (mở nhiều TXT + copy 1 lần)</div>
+    </div>
+  </div>
   <div class="header">
     <div>
-      <div class="title">Tool cắt & làm sạch chương truyện (v9)</div>
+      <div class="title">Tool cắt & làm sạch chương truyện (v11)</div>
       <div class="subtitle">Hỗ trợ <b>mốc bắt đầu</b> và <b>mốc kết thúc</b> theo <b>thứ tự ưu tiên</b> • mỗi dòng 1 mốc • <b>tự lưu cài đặt mốc</b> • <b>tự nhớ tên file TXT</b> • <b>tự tăng số tên file</b></div>
     </div>
     <div class="stats">
@@ -93,7 +191,7 @@
       <button class="btn ghost" id="btnClearAll">Xóa tất cả</button>
       <label class="btn" for="fileInput">Mở file .txt</label>
       <input id="fileInput" type="file" accept=".txt,text/plain">
-      <span class="pill">Mẹo: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> = Lấy đoạn • mốc/tên file/bộ đếm tự lưu</span>
+      <span class="pill">Mẹo: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> = Lấy đoạn • 3 gạch ngang mở không gian TXT • mốc/tên file/bộ đếm tự lưu</span>
     </div>
 
     <details>
@@ -179,8 +277,8 @@ uukanshu
     <div id="status" class="status">Sẵn sàng. Dán văn bản vào ô bên trái rồi bấm <b>Lấy đoạn truyện</b> hoặc <b>Làm sạch 1 chạm</b>.</div>
 
     <div class="footer">
-      <div>✅ Offline • ✅ GitHub Pages • ✅ Ưu tiên mốc bắt đầu/kết thúc theo thứ tự • ✅ Tự lưu mốc • ✅ Tự nhớ tên file TXT • ✅ Tự tăng số tên file • ✅ Tự xóa sau khi tải</div>
-      <div class="mono">v9-auto-clear-after-download</div>
+      <div>✅ Offline • ✅ GitHub Pages • ✅ 3 gạch ngang/panel riêng • ✅ Mở nhiều TXT cùng lúc • ✅ Có ô văn bản TXT để copy/gộp • ✅ Tự xóa sau khi tải</div>
+      <div class="mono">v11-hamburger-panel-multi-txt</div>
     </div>
   </div>
 </div>
@@ -218,6 +316,21 @@ const els = {
   btnResetNameCounter: document.getElementById('btnResetNameCounter')
 
 };
+
+// ===== refs: panel 3 gạch / multi TXT (v11) =====
+Object.assign(els, {
+  btnOpenDrawer: document.getElementById('btnOpenDrawer'),
+  btnCloseDrawer: document.getElementById('btnCloseDrawer'),
+  drawerPanel: document.getElementById('drawerPanel'),
+  drawerBackdrop: document.getElementById('drawerBackdrop'),
+  multiTxtFileInput: document.getElementById('multiTxtFileInput'),
+  multiTxtFileList: document.getElementById('multiTxtFileList'),
+  multiTxtTextarea: document.getElementById('multiTxtTextarea'),
+  multiTxtMeta: document.getElementById('multiTxtMeta'),
+  btnCopyPanelTxt: document.getElementById('btnCopyPanelTxt'),
+  btnSendPanelToInput: document.getElementById('btnSendPanelToInput'),
+  btnClearPanelTxt: document.getElementById('btnClearPanelTxt')
+});
 
 // ===== localStorage: lưu cài đặt mốc / cụm từ xóa thêm =====
 const STORAGE_KEY = 'tool_cat_doan_truyen_settings_v8';
@@ -533,6 +646,125 @@ async function pasteInput(){
     els.input.value = txt; updateStats(); setStatus('✅ Đã dán văn bản từ clipboard.', 'ok');
   }catch{ setStatus('⚠️ Trình duyệt chặn đọc clipboard. Hãy dán thủ công.', 'warn'); }
 }
+
+// ===== Panel 3 gạch: mở nhiều TXT + ô văn bản TXT =====
+let __multiTxtPickedFiles = [];
+
+function openDrawerPanel(){
+  if (!els.drawerPanel || !els.drawerBackdrop) return;
+  els.drawerPanel.classList.add('show');
+  els.drawerBackdrop.classList.add('show');
+  els.drawerPanel.setAttribute('aria-hidden', 'false');
+}
+function closeDrawerPanel(){
+  if (!els.drawerPanel || !els.drawerBackdrop) return;
+  els.drawerPanel.classList.remove('show');
+  els.drawerBackdrop.classList.remove('show');
+  els.drawerPanel.setAttribute('aria-hidden', 'true');
+}
+function updateMultiTxtMeta(){
+  const txt = String((els.multiTxtTextarea && els.multiTxtTextarea.value) || '');
+  const fileCount = __multiTxtPickedFiles.length;
+  if (els.multiTxtMeta){
+    els.multiTxtMeta.textContent = `Tổng: ${fileCount} tệp • ${txt.length.toLocaleString('vi-VN')} ký tự`;
+  }
+}
+function renderMultiTxtFileList(){
+  if (!els.multiTxtFileList) return;
+  if (!__multiTxtPickedFiles.length){
+    els.multiTxtFileList.innerHTML = 'Chưa chọn tệp TXT nào.';
+    updateMultiTxtMeta();
+    return;
+  }
+  els.multiTxtFileList.innerHTML = __multiTxtPickedFiles.map((f, idx) => {
+    const size = Number(f.size || 0).toLocaleString('vi-VN');
+    return `<div class="item">${idx+1}. <b>${f.name}</b> • ${size} byte</div>`;
+  }).join('');
+  updateMultiTxtMeta();
+}
+function readTxtFileAsText(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(String(e.target.result || ''));
+    reader.onerror = () => reject(new Error('read_error'));
+    reader.readAsText(file, 'utf-8');
+  });
+}
+async function handleMultiTxtSelect(fileList){
+  const files = Array.from(fileList || []);
+  if (!files.length){
+    setStatus('⚠️ Bạn chưa chọn tệp TXT nào.', 'warn');
+    return;
+  }
+  const txtFiles = files.filter(f => /\.txt$/i.test(f.name) || f.type === 'text/plain' || !f.type);
+  if (!txtFiles.length){
+    setStatus('⚠️ Không có tệp TXT hợp lệ.', 'warn');
+    return;
+  }
+
+  __multiTxtPickedFiles = txtFiles.slice();
+  renderMultiTxtFileList();
+
+  const chunks = [];
+  let okCount = 0;
+  for (const file of txtFiles){
+    try{
+      const content = await readTxtFileAsText(file);
+      chunks.push(normalizeNewlines(content).trim());
+      okCount++;
+    }catch(err){
+      chunks.push('');
+    }
+  }
+
+  // Gộp thành 1 để copy luôn (không thêm tiêu đề phân cách để văn bản sạch hơn)
+  const merged = chunks.filter(Boolean).join('\n\n').trim();
+  if (els.multiTxtTextarea){
+    els.multiTxtTextarea.value = merged;
+    updateMultiTxtMeta();
+  }
+
+  openDrawerPanel();
+  setStatus(`✅ Đã mở ${okCount}/${txtFiles.length} tệp TXT vào không gian riêng (ô văn bản TXT).`, 'ok');
+}
+async function copyPanelTxt(){
+  const txt = String((els.multiTxtTextarea && els.multiTxtTextarea.value) || '');
+  if (!txt){
+    setStatus('⚠️ Ô văn bản TXT đang trống.', 'warn');
+    return;
+  }
+  try{
+    await navigator.clipboard.writeText(txt);
+    setStatus('✅ Đã copy nội dung trong ô văn bản TXT.', 'ok');
+  }catch(err){
+    try{
+      els.multiTxtTextarea.focus();
+      els.multiTxtTextarea.select();
+      document.execCommand('copy');
+      setStatus('✅ Đã copy nội dung trong ô văn bản TXT (fallback).', 'ok');
+    }catch(e2){
+      setStatus('⚠️ Không copy được. Hãy copy thủ công trong ô văn bản TXT.', 'warn');
+    }
+  }
+}
+function sendPanelTxtToInput(){
+  const txt = String((els.multiTxtTextarea && els.multiTxtTextarea.value) || '');
+  if (!txt){
+    setStatus('⚠️ Ô văn bản TXT đang trống.', 'warn');
+    return;
+  }
+  els.input.value = txt;
+  updateStats();
+  closeDrawerPanel();
+  setStatus('✅ Đã đưa nội dung từ ô văn bản TXT vào ô văn bản gốc.', 'ok');
+}
+function clearPanelTxt(){
+  __multiTxtPickedFiles = [];
+  if (els.multiTxtTextarea) els.multiTxtTextarea.value = '';
+  renderMultiTxtFileList();
+  setStatus('🧹 Đã xóa danh sách tệp và ô văn bản TXT trong không gian riêng.', 'ok');
+}
+
 function openTextFile(file){
   const reader = new FileReader();
   reader.onload = e => { els.input.value = String(e.target.result || ''); updateStats(); setStatus(`✅ Đã mở file: <b>${file.name}</b>`, 'ok'); };
@@ -563,7 +795,23 @@ els.dropZone.addEventListener('drop', e => {
   openTextFile(file);
 });
 
+if (els.btnOpenDrawer) els.btnOpenDrawer.addEventListener('click', openDrawerPanel);
+if (els.btnCloseDrawer) els.btnCloseDrawer.addEventListener('click', closeDrawerPanel);
+if (els.drawerBackdrop) els.drawerBackdrop.addEventListener('click', closeDrawerPanel);
+
+if (els.multiTxtFileInput){
+  els.multiTxtFileInput.addEventListener('change', async (e) => {
+    await handleMultiTxtSelect(e.target.files);
+    e.target.value = '';
+  });
+}
+if (els.btnCopyPanelTxt) els.btnCopyPanelTxt.addEventListener('click', copyPanelTxt);
+if (els.btnSendPanelToInput) els.btnSendPanelToInput.addEventListener('click', sendPanelTxtToInput);
+if (els.btnClearPanelTxt) els.btnClearPanelTxt.addEventListener('click', clearPanelTxt);
+if (els.multiTxtTextarea) els.multiTxtTextarea.addEventListener('input', updateMultiTxtMeta);
+
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ closeDrawerPanel(); }
   if (e.ctrlKey && e.key === 'Enter'){ e.preventDefault(); runExtract(); }
   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l'){ e.preventDefault(); runOneClickClean(); }
 });
