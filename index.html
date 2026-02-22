@@ -166,7 +166,7 @@
   </div>
   <div class="header">
     <div>
-      <div class="title">Tool cắt & làm sạch chương truyện (v11)</div>
+      <div class="title">Tool cắt & làm sạch chương truyện (v11.1)</div>
       <div class="subtitle">Hỗ trợ <b>mốc bắt đầu</b> và <b>mốc kết thúc</b> theo <b>thứ tự ưu tiên</b> • mỗi dòng 1 mốc • <b>tự lưu cài đặt mốc</b> • <b>tự nhớ tên file TXT</b> • <b>tự tăng số tên file</b></div>
     </div>
     <div class="stats">
@@ -277,8 +277,8 @@ uukanshu
     <div id="status" class="status">Sẵn sàng. Dán văn bản vào ô bên trái rồi bấm <b>Lấy đoạn truyện</b> hoặc <b>Làm sạch 1 chạm</b>.</div>
 
     <div class="footer">
-      <div>✅ Offline • ✅ GitHub Pages • ✅ 3 gạch ngang/panel riêng • ✅ Mở nhiều TXT cùng lúc • ✅ Có ô văn bản TXT để copy/gộp • ✅ Tự xóa sau khi tải</div>
-      <div class="mono">v11-hamburger-panel-multi-txt</div>
+      <div>✅ Offline • ✅ GitHub Pages • ✅ 3 gạch ngang/panel riêng • ✅ Mở nhiều TXT cùng lúc • ✅ Copy xong tự xóa panel TXT • ✅ Tự xóa sau khi tải</div>
+      <div class="mono">v11.1-copy-clear-panel</div>
     </div>
   </div>
 </div>
@@ -733,18 +733,24 @@ async function copyPanelTxt(){
     setStatus('⚠️ Ô văn bản TXT đang trống.', 'warn');
     return;
   }
+
+  // Copy thành công -> tự xóa panel TXT (danh sách tệp + ô văn bản)
   try{
     await navigator.clipboard.writeText(txt);
-    setStatus('✅ Đã copy nội dung trong ô văn bản TXT.', 'ok');
-  }catch(err){
-    try{
-      els.multiTxtTextarea.focus();
-      els.multiTxtTextarea.select();
-      document.execCommand('copy');
-      setStatus('✅ Đã copy nội dung trong ô văn bản TXT (fallback).', 'ok');
-    }catch(e2){
-      setStatus('⚠️ Không copy được. Hãy copy thủ công trong ô văn bản TXT.', 'warn');
-    }
+    clearPanelTxt();
+    setStatus('✅ Đã copy nội dung trong ô văn bản TXT và tự xóa phần chọn tệp TXT.', 'ok');
+    return;
+  }catch(err){}
+
+  // Fallback copy thủ công
+  try{
+    els.multiTxtTextarea.focus();
+    els.multiTxtTextarea.select();
+    document.execCommand('copy');
+    clearPanelTxt();
+    setStatus('✅ Đã copy nội dung trong ô văn bản TXT (fallback) và tự xóa phần chọn tệp TXT.', 'ok');
+  }catch(e2){
+    setStatus('⚠️ Không copy được. Hãy copy thủ công trong ô văn bản TXT.', 'warn');
   }
 }
 function sendPanelTxtToInput(){
