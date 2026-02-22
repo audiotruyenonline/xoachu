@@ -62,8 +62,8 @@
 <div class="wrap">
   <div class="header">
     <div>
-      <div class="title">Tool cắt & làm sạch chương truyện (v5)</div>
-      <div class="subtitle">Hỗ trợ <b>mốc bắt đầu</b> và <b>mốc kết thúc</b> theo <b>thứ tự ưu tiên</b> • mỗi dòng 1 mốc</div>
+      <div class="title">Tool cắt & làm sạch chương truyện (v6)</div>
+      <div class="subtitle">Hỗ trợ <b>mốc bắt đầu</b> và <b>mốc kết thúc</b> theo <b>thứ tự ưu tiên</b> • mỗi dòng 1 mốc • <b>tự lưu cài đặt mốc</b></div>
     </div>
     <div class="stats">
       <div class="chip" id="statInput">Input: 0 ký tự</div>
@@ -81,7 +81,7 @@
       <button class="btn ghost" id="btnClearAll">Xóa tất cả</button>
       <label class="btn" for="fileInput">Mở file .txt</label>
       <input id="fileInput" type="file" accept=".txt,text/plain">
-      <span class="pill">Mẹo: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> = Lấy đoạn</span>
+      <span class="pill">Mẹo: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> = Lấy đoạn • mốc tự lưu</span>
     </div>
 
     <details>
@@ -116,6 +116,7 @@ Chương sau</textarea>
         </div>
 
         <div class="field">
+          <div class="small">✅ Các ô mốc bắt đầu / mốc kết thúc / cụm từ xóa thêm sẽ tự lưu trên trình duyệt (localStorage). Tải lại trang vẫn còn.</div>
           <label>Cụm từ xóa thêm (mỗi dòng 1 cụm, áp dụng trong “Làm sạch 1 chạm” và “Xóa watermark phổ biến”)</label>
           <textarea id="extraRemovePhrases" rows="12">Chương trước
 Mục lục
@@ -130,6 +131,10 @@ uukanshu
 đổi mới nhanh nhất Chương mới nhất!
 ( Tấu chương xong )
 .!)"</textarea>
+        </div>
+              <div class="row" style="padding:0">
+          <button class="btn" type="button" id="btnSaveSettingsNow">Lưu cài đặt mốc ngay</button>
+          <button class="btn ghost" type="button" id="btnResetSavedSettings">Xóa cài đặt mốc đã lưu</button>
         </div>
       </div>
     </details>
@@ -162,8 +167,8 @@ uukanshu
     <div id="status" class="status">Sẵn sàng. Dán văn bản vào ô bên trái rồi bấm <b>Lấy đoạn truyện</b> hoặc <b>Làm sạch 1 chạm</b>.</div>
 
     <div class="footer">
-      <div>✅ Offline • ✅ GitHub Pages • ✅ Ưu tiên mốc bắt đầu/kết thúc theo thứ tự</div>
-      <div class="mono">v5-extra-remove-presets</div>
+      <div>✅ Offline • ✅ GitHub Pages • ✅ Ưu tiên mốc bắt đầu/kết thúc theo thứ tự • ✅ Tự lưu mốc</div>
+      <div class="mono">v6-localstorage-marker-settings</div>
     </div>
   </div>
 </div>
@@ -193,10 +198,67 @@ const els = {
   btnNormalize: document.getElementById('btnNormalize'),
   btnSelectOutput: document.getElementById('btnSelectOutput'),
   btnRemoveBlankLines: document.getElementById('btnRemoveBlankLines'),
-  btnRemoveWatermark: document.getElementById('btnRemoveWatermark')
+  btnRemoveWatermark: document.getElementById('btnRemoveWatermark'),
+  btnSaveSettingsNow: document.getElementById('btnSaveSettingsNow'),
+  btnResetSavedSettings: document.getElementById('btnResetSavedSettings')
+
 };
 
+// ===== localStorage: lưu cài đặt mốc / cụm từ xóa thêm =====
+const STORAGE_KEY = 'tool_cat_doan_truyen_settings_v6';
+
+function getSettingsFields(){
+  return ['startMarker','endMarker','startMarkersPriority','endMarkersPriority','extraRemovePhrases'];
+}
+
+function saveSettingsToLocal(){
+  try{
+    const data = {};
+    for (const key of getSettingsFields()){
+      if (els[key]) data[key] = els[key].value ?? '';
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }catch(err){}
+}
+
+function loadSettingsFromLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object') return false;
+    let restored = 0;
+    for (const key of getSettingsFields()){
+      if (els[key] && typeof data[key] === 'string'){
+        els[key].value = data[key];
+        restored++;
+      }
+    }
+    return restored > 0;
+  }catch(err){
+    return false;
+  }
+}
+
+function bindAutoSaveSettings(){
+  for (const key of getSettingsFields()){
+    if (!els[key]) continue;
+    els[key].addEventListener('input', saveSettingsToLocal);
+    els[key].addEventListener('change', saveSettingsToLocal);
+  }
+}
+
+function resetSavedSettings(){
+  try{
+    localStorage.removeItem(STORAGE_KEY);
+    setStatus('🗑️ Đã xóa cài đặt mốc đã lưu trên trình duyệt. Tải lại trang để về mặc định.', 'ok');
+  }catch(err){
+    setStatus('⚠️ Không xóa được cài đặt lưu trên trình duyệt.', 'warn');
+  }
+}
+
 function setStatus(msg, type=''){
+
   els.status.className = 'status' + (type ? ' ' + type : '');
   els.status.innerHTML = msg;
 }
@@ -366,7 +428,25 @@ document.addEventListener('keydown', e => {
 
 els.input.addEventListener('input', updateStats);
 els.output.addEventListener('input', updateStats);
+
+// Khôi phục cài đặt mốc đã lưu (nếu có) + tự động lưu khi người dùng chỉnh
+const __restoredSettings = loadSettingsFromLocal();
+bindAutoSaveSettings();
+
+if (els.btnSaveSettingsNow){
+  els.btnSaveSettingsNow.addEventListener('click', () => {
+    saveSettingsToLocal();
+    setStatus('✅ Đã lưu cài đặt mốc/cụm từ vào trình duyệt.', 'ok');
+  });
+}
+if (els.btnResetSavedSettings){
+  els.btnResetSavedSettings.addEventListener('click', resetSavedSettings);
+}
+
 updateStats();
+if (__restoredSettings){
+  setStatus('✅ Đã khôi phục cài đặt mốc đã lưu từ lần trước.', 'ok');
+}
 </script>
 </body>
 </html>
