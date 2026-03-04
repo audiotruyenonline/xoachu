@@ -122,6 +122,13 @@
     }
     .drawer-note{font-size:12px; color:var(--muted)}
 
+    .drawer-input{
+      width:100%; padding:10px 12px; border-radius:12px;
+      border:1px solid var(--line); background:#0b1322; color:var(--text);
+      font-size:13px;
+    }
+    .drawer-input::placeholder{color:var(--muted)}
+
   </style>
 </head>
 <body>
@@ -143,9 +150,14 @@
         <button class="btn" id="btnCopyPanelTxt" type="button">Copy ô TXT</button>
         <button class="btn ghost" id="btnSendPanelToInput" type="button">Đưa vào ô văn bản gốc</button>
         <button class="btn ghost" id="btnClearPanelTxt" type="button">Xóa ô TXT</button>
+        <button class="btn warn" id="btnDownloadPanelTxt" type="button">Tải TXT gộp</button>
       </div>
       <div class="drawer-note">Tool sẽ giữ đúng thứ tự tệp theo danh sách trả về từ trình chọn file (thường là thứ tự bạn chọn).</div>
       <div class="drawer-list" id="multiTxtFileList">Chưa chọn tệp TXT nào.</div>
+      <div class="field" style="margin-top:10px">
+        <label style="font-size:12px;color:var(--muted)">Tên file gộp khi tải (tùy chọn)</label>
+        <input id="multiTxtFileName" class="drawer-input" type="text" placeholder="vd: tap_gop.txt">
+      </div>
     </div>
 
     <div class="drawer-card">
@@ -586,6 +598,12 @@ function getDefaultTxtFileName(){
   return `chuong_sach_v7_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.txt`;
 }
 
+function getDefaultPanelTxtFileName(){
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `gop_txt_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.txt`;
+}
+
 function sanitizeFileName(name){
   let n = String(name || '').trim();
   n = n.replace(/[\\/:*?"<>|]/g, '_'); // ký tự không hợp lệ
@@ -724,6 +742,18 @@ async function handleMultiTxtSelect(fileList){
     updateMultiTxtMeta();
   }
 
+  // Gợi ý tên file gộp (tự động) để bấm tải 1 phát là xong
+  if (els.multiTxtFileName){
+    const first = txtFiles[0] ? txtFiles[0].name : '';
+    const p = splitFileNameParts(first || getDefaultPanelTxtFileName());
+    let baseStem = String(p.stem || 'gop_txt').replace(/\d+$/,'').trim();
+    if (!baseStem) baseStem = 'gop_txt';
+    const count = txtFiles.length;
+    els.multiTxtFileName.value = (count <= 1)
+      ? sanitizeFileName(first || 'tap.txt')
+      : sanitizeFileName(`${baseStem}_gop_${count}tep${p.ext || '.txt'}`);
+  }
+
   openDrawerPanel();
   setStatus(`✅ Đã mở ${okCount}/${txtFiles.length} tệp TXT vào không gian riêng (ô văn bản TXT).`, 'ok');
 }
@@ -753,6 +783,37 @@ async function copyPanelTxt(){
     setStatus('⚠️ Không copy được. Hãy copy thủ công trong ô văn bản TXT.', 'warn');
   }
 }
+
+function downloadPanelTxt(){
+  const txt = String((els.multiTxtTextarea && els.multiTxtTextarea.value) || '');
+  if (!txt){
+    setStatus('⚠️ Ô văn bản TXT đang trống, không có gì để tải.', 'warn');
+    return;
+  }
+
+  const rawName = (els.multiTxtFileName && String(els.multiTxtFileName.value || '').trim())
+    ? els.multiTxtFileName.value
+    : getDefaultPanelTxtFileName();
+
+  const fileName = sanitizeFileName(rawName);
+
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  // Tải xong -> tự xóa panel TXT (danh sách tệp + ô văn bản) để tránh nhầm lẫn lần sau
+  clearPanelTxt();
+  if (els.multiTxtFileName) els.multiTxtFileName.value = fileName;
+
+  setStatus(`✅ Đã tải TXT gộp: <b>${fileName}</b> và tự xóa phần chọn tệp TXT.`, 'ok');
+}
+
 function sendPanelTxtToInput(){
   const txt = String((els.multiTxtTextarea && els.multiTxtTextarea.value) || '');
   if (!txt){
