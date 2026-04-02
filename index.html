@@ -189,6 +189,10 @@
 
   <div class="card">
     <div class="toolbar">
+
+<input id="storyId" class="mini-input" type="number" placeholder="ID truyện (vd: 1,2,3...)" value="1">
+<button class="btn ghost" id="btnResetStoryCounter" type="button">Reset truyện này</button>
+
       <button class="btn primary" id="btnExtract">Lấy đoạn truyện</button>
       <button class="btn success" id="btnOneClick">Làm sạch 1 chạm</button>
       <button class="btn" id="btnCopy">Copy kết quả</button>
@@ -912,6 +916,87 @@ if (els.txtFileName && !String(els.txtFileName.value || '').trim()){
 if (__restoredSettings){
   setStatus('✅ Đã khôi phục cài đặt mốc/tên file/tự tăng số đã lưu từ lần trước.', 'ok');
 }
+
+// ===== NEW: story ID counter =====
+const STORY_COUNTER_MAP_KEY = 'story_file_counters_v1';
+
+function loadStoryCounterMap(){
+  try{
+    const raw = localStorage.getItem(STORY_COUNTER_MAP_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){return {}}
+}
+function saveStoryCounterMap(map){
+  try{localStorage.setItem(STORY_COUNTER_MAP_KEY, JSON.stringify(map));}catch(e){}
+}
+function getStoryId(){
+  const el = document.getElementById('storyId');
+  return el ? (String(el.value).trim() || '1') : '1';
+}
+
+// override auto increment
+const oldGetAutoIncrementFileName = getAutoIncrementFileName;
+getAutoIncrementFileName = function(fileName){
+  const p = splitFileNameParts(fileName);
+  let baseStem = p.stem.replace(/\d+$/,'').trim();
+  if (!baseStem) baseStem = p.stem || 'chuong_sach';
+
+  const storyId = getStoryId();
+  const map = loadStoryCounterMap();
+
+  if (!map[storyId]) map[storyId] = {};
+
+  const key = (baseStem + p.ext).toLowerCase();
+  const next = (Number(map[storyId][key]) || 0) + 1;
+
+  map[storyId][key] = next;
+  saveStoryCounterMap(map);
+
+  return {
+    fileName: `${baseStem}${next}${p.ext}`,
+    baseStem,
+    ext: p.ext,
+    count: next,
+    key
+  };
+};
+
+function resetStoryCounter(){
+  const storyId = getStoryId();
+  const map = loadStoryCounterMap();
+  if (map[storyId]) delete map[storyId];
+  saveStoryCounterMap(map);
+  setStatus(`✅ Đã reset truyện ID = <b>${storyId}</b> về 1`, 'ok');
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('btnResetStoryCounter')?.addEventListener('click', resetStoryCounter);
+});
+
+
+// ===== override download to include storyId =====
+const oldDownloadBtn = els.btnDownloadTxt;
+els.btnDownloadTxt.addEventListener('click', function(e){
+  e.stopImmediatePropagation?.();
+  if (!els.output.value){
+    setStatus('⚠️ Chưa có nội dung để tải.', 'warn'); return;
+  }
+
+  let fileName = els.txtFileName.value || 'chuong.txt';
+  const storyId = getStoryId();
+
+  const auto = getAutoIncrementFileName(fileName);
+  const finalName = `truyen${storyId}_${auto.fileName}`;
+
+  const blob = new Blob([els.output.value], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = finalName;
+  a.click();
+
+  setStatus(`✅ Đã tải: <b>${finalName}</b>`, 'ok');
+});
+
 </script>
 </body>
 </html>
