@@ -429,21 +429,31 @@ function splitFileNameParts(fileName){
 // Tự tăng: truyenchu.txt -> truyenchu1.txt -> truyenchu2.txt...
 function getAutoIncrementFileName(fileName){
   const p = splitFileNameParts(fileName);
-  // Nếu ô tên file đang là truyenchu12.txt thì coi "truyenchu" là gốc để tăng tiếp
-  let baseStem = p.stem.replace(/\d+$/,'').trim();
-  if (!baseStem) baseStem = p.stem || 'chuong_sach';
+
+  const match = p.stem.match(/^(.*?)(\d+)$/);
+  let baseStem = p.stem.trim() || 'chuong_sach';
+  let startNum = 0;
+
+  if (match){
+    baseStem = match[1].trim() || 'chuong_sach';
+    startNum = parseInt(match[2], 10) || 0;
+  }
 
   const key = (baseStem + p.ext).toLowerCase();
   const map = loadFileCounterMap();
-  const next = (Number(map[key]) || 0) + 1;
-  map[key] = next;
+
+  if (!(key in map)){
+    map[key] = (startNum > 0) ? (startNum - 1) : 0;
+  }
+
+  map[key] = Number(map[key]) + 1;
   saveFileCounterMap(map);
 
   return {
-    fileName: `${baseStem}${next}${p.ext}`,
+    fileName: `${baseStem}${map[key]}${p.ext}`,
     baseStem,
     ext: p.ext,
-    count: next,
+    count: map[key],
     key
   };
 }
@@ -665,7 +675,7 @@ async function pasteInput(){
   try{
     const txt = await navigator.clipboard.readText();
     if (!txt){ setStatus('⚠️ Clipboard không có văn bản.', 'warn'); return; }
-    els.input.value = txt; updateStats(); setStatus('✅ Đã dán văn bản từ clipboard.', 'ok');
+    els.input.value = txt; updateStats(); runOneClickClean(); setStatus('✅ Đã dán & tự làm sạch.', 'ok');
   }catch{ setStatus('⚠️ Trình duyệt chặn đọc clipboard. Hãy dán thủ công.', 'warn'); }
 }
 
@@ -846,7 +856,7 @@ function openTextFile(file){
 els.btnExtract.addEventListener('click', runExtract);
 els.btnOneClick.addEventListener('click', runOneClickClean);
 els.btnCopy.addEventListener('click', copyOutput);
-els.btnDownloadTxt.addEventListener('click', downloadTxt);
+// els.btnDownloadTxt.addEventListener('click', downloadTxt);
 els.btnSwap.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để đưa lên ô trên.', 'warn');return;} els.input.value=els.output.value; els.output.value=''; updateStats(); setStatus('✅ Đã đưa kết quả lên ô trên.', 'ok'); });
 els.btnClearAll.addEventListener('click', ()=>{ els.input.value=''; els.output.value=''; updateStats(); setStatus('🧹 Đã xóa toàn bộ nội dung.', ''); });
 els.btnPaste.addEventListener('click', pasteInput);
@@ -934,29 +944,39 @@ function getStoryId(){
   return el ? (String(el.value).trim() || '1') : '1';
 }
 
-// override auto increment
+// Keep the story counter controls, but use the same filename rule:
+// - chuong70.txt -> 70, 71, 72...
+// - chuong.txt -> 1, 2, 3...
 const oldGetAutoIncrementFileName = getAutoIncrementFileName;
 getAutoIncrementFileName = function(fileName){
   const p = splitFileNameParts(fileName);
-  let baseStem = p.stem.replace(/\d+$/,'').trim();
-  if (!baseStem) baseStem = p.stem || 'chuong_sach';
+
+  const match = p.stem.match(/^(.*?)(\d+)$/);
+  let baseStem = p.stem.trim() || 'chuong_sach';
+  let startNum = 0;
+
+  if (match){
+    baseStem = match[1].trim() || 'chuong_sach';
+    startNum = parseInt(match[2], 10) || 0;
+  }
 
   const storyId = getStoryId();
   const map = loadStoryCounterMap();
-
   if (!map[storyId]) map[storyId] = {};
 
   const key = (baseStem + p.ext).toLowerCase();
-  const next = (Number(map[storyId][key]) || 0) + 1;
+  if (!(key in map[storyId])){
+    map[storyId][key] = (startNum > 0) ? (startNum - 1) : 0;
+  }
 
-  map[storyId][key] = next;
+  map[storyId][key] = Number(map[storyId][key]) + 1;
   saveStoryCounterMap(map);
 
   return {
-    fileName: `${baseStem}${next}${p.ext}`,
+    fileName: `${baseStem}${map[storyId][key]}${p.ext}`,
     baseStem,
     ext: p.ext,
-    count: next,
+    count: map[storyId][key],
     key
   };
 };
@@ -973,28 +993,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('btnResetStoryCounter')?.addEventListener('click', resetStoryCounter);
 });
 
-
-// ===== override download to include storyId =====
-const oldDownloadBtn = els.btnDownloadTxt;
+// ===== override download to use the normal filename rule =====
 els.btnDownloadTxt.addEventListener('click', function(e){
   e.stopImmediatePropagation?.();
-  if (!els.output.value){
-    setStatus('⚠️ Chưa có nội dung để tải.', 'warn'); return;
-  }
-
-  let fileName = els.txtFileName.value || 'chuong.txt';
-  const storyId = getStoryId();
-
-  const auto = getAutoIncrementFileName(fileName);
-  const finalName = `truyen${storyId}_${auto.fileName}`;
-
-  const blob = new Blob([els.output.value], {type:'text/plain'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = finalName;
-  a.click();
-
-  setStatus(`✅ Đã tải: <b>${finalName}</b>`, 'ok');
+  downloadTxt();
+});
+// AUTO CLEAN WHEN PASTE / INPUT
+let autoCleanTimeout;
+els.input.addEventListener('input', () => {
+  clearTimeout(autoCleanTimeout);
+  autoCleanTimeout = setTimeout(() => {
+    runOneClickClean();
+  }, 200); // delay nhẹ tránh lag
 });
 
 </script>
