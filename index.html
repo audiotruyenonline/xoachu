@@ -620,17 +620,56 @@ function getDefaultPanelTxtFileName(){
 
 function sanitizeFileName(name){
   let n = String(name || '').trim();
-  n = n.replace(/[\\/:*?"<>|]/g, '_'); // ký tự không hợp lệ
+  n = n.replace(/[\/:*?"<>|]/g, '_'); // ký tự không hợp lệ
   n = n.replace(/\s+/g, ' ').trim();
   if (!n) n = getDefaultTxtFileName();
   if (!/\.txt$/i.test(n)) n += '.txt';
   return n;
 }
 
+const LAST_DOWNLOADED_HASH_KEY = 'tool_cat_doan_truyen_last_downloaded_hash_v1';
+
+function simpleTextHash(str){
+  const s = String(str || '');
+  let hash = 2166136261; // FNV-1a 32-bit
+  for (let i = 0; i < s.length; i++){
+    hash ^= s.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+function loadLastDownloadedHash(){
+  try{
+    return localStorage.getItem(LAST_DOWNLOADED_HASH_KEY) || '';
+  }catch(e){
+    return '';
+  }
+}
+
+function saveLastDownloadedHash(hash){
+  try{
+    localStorage.setItem(LAST_DOWNLOADED_HASH_KEY, String(hash || ''));
+  }catch(e){}
+}
+
+let lastDownloadedHash = loadLastDownloadedHash();
+
 function downloadTxt(){
   if (!els.output.value){
     setStatus('⚠️ Chưa có kết quả để tải TXT.', 'warn');
     return;
+  }
+
+  const currentText = String(els.output.value || '');
+  const currentHash = simpleTextHash(currentText);
+
+  if (lastDownloadedHash && lastDownloadedHash === currentHash){
+    const confirmDownload = confirm('⚠️ Nội dung TXT này giống file vừa tải trước đó.\nBạn vẫn muốn tải tiếp không?');
+    if (!confirmDownload){
+      setStatus('⛔ Đã hủy tải vì nội dung trùng với file vừa tải.', 'warn');
+      return;
+    }
   }
 
   const rawName = (els.txtFileName && els.txtFileName.value) ? els.txtFileName.value : '';
@@ -659,6 +698,10 @@ function downloadTxt(){
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+
+  // Ghi nhớ nội dung vừa tải để lần sau so sánh trùng
+  lastDownloadedHash = currentHash;
+  saveLastDownloadedHash(currentHash);
 
   // Tự xóa nội dung sau khi tải xong (giữ lại cài đặt mốc / tên file / bộ đếm)
   els.input.value = '';
