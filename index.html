@@ -163,7 +163,7 @@
     <div class="drawer-card">
       <h4>📝 Ô văn bản TXT (gộp để copy)</h4>
       <textarea id="multiTxtTextarea" class="drawer-txt" placeholder="Sau khi chọn nhiều file TXT, nội dung gộp sẽ hiện ở đây để bạn copy 1 lần..."></textarea>
-      <div class="drawer-note" id="multiTxtMeta">Tổng: 0 tệp • 0 ký tự</div>
+      <div class="drawer-note" id="multiTxtMeta" style="white-space:pre-line;">Tổng: 0 tệp • 0 ký tự • 0 từ • ⏱ x1: 0s | x1.25: 0s | x1.5: 0s | x2: 0s</div>
     </div>
   </div>
 </aside>
@@ -697,8 +697,33 @@ function closeDrawerPanel(){
 function updateMultiTxtMeta(){
   const txt = String((els.multiTxtTextarea && els.multiTxtTextarea.value) || '');
   const fileCount = __multiTxtPickedFiles.length;
+
+  const charCount = txt.length;
+  const wordCount = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+
+  function formatTime(sec){
+    const h = String(Math.floor(sec/3600)).padStart(2,'0');
+    const m = String(Math.floor((sec%3600)/60)).padStart(2,'0');
+    const s = String(sec%60).padStart(2,'0');
+    return h + ':' + m + ':' + s;
+  }
+
+  function calc(words, wpm){
+    return Math.round((words / wpm) * 60);
+  }
+
+  const x1 = formatTime(calc(wordCount,160));
+  const x15 = formatTime(calc(wordCount,240));
+  const x2 = formatTime(calc(wordCount,320));
+  const x3 = formatTime(calc(wordCount,480));
+
   if (els.multiTxtMeta){
-    els.multiTxtMeta.textContent = `Tổng: ${fileCount} tệp • ${txt.length.toLocaleString('vi-VN')} ký tự`;
+    els.multiTxtMeta.textContent =
+      'Tổng tệp: ' + fileCount + ' | Ký tự: ' + charCount + ' | Từ: ' + wordCount + '\n' +
+      'X1 = ' + x1 + '\n' +
+      'X1.5 = ' + x15 + '\n' +
+      'X2 = ' + x2 + '\n' +
+      'X3 = ' + x3;
   }
 }
 function renderMultiTxtFileList(){
