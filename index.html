@@ -1032,6 +1032,40 @@ els.input.addEventListener('input', () => {
   }, 200); // delay nhẹ tránh lag
 });
 
+
+// ===== FIX: download panel txt + auto increment =====
+let panelDownloadCounter = 0;
+
+function downloadPanelTxt(){
+  const txt = String((els.multiTxtTextarea && els.multiTxtTextarea.value) || '');
+  if (!txt){
+    setStatus('⚠️ Ô văn bản TXT đang trống, không có gì để tải.', 'warn');
+    return;
+  }
+
+  panelDownloadCounter++;
+  const fileName = `tap_${panelDownloadCounter}.txt`;
+
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  clearPanelTxt();
+
+  setStatus(`✅ Đã tải TXT gộp: <b>${fileName}</b>`, 'ok');
+}
+
+// bind button
+if (document.getElementById('btnDownloadPanelTxt')){
+  document.getElementById('btnDownloadPanelTxt').addEventListener('click', downloadPanelTxt);
+}
+
 </script>
 </body>
 </html>
