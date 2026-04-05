@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tool cắt & làm sạch chương truyện - v4 (priority start/end)</title>
+  <title>Tool cắt & làm sạch chương truyện - v12 PRO (priority start/end)</title>
   <style>
     :root{
       --bg:#0b1220; --panel:#121a2b; --panel2:#0f1728; --line:#23304a;
@@ -143,21 +143,44 @@
   </div>
   <div class="drawer-body">
     <div class="drawer-card">
-      <h4>📂 Chọn TXT (nhiều tệp cùng lúc)</h4>
+      <h4>📂 Gộp TXT theo tên chương / batch tự động</h4>
       <div class="drawer-actions">
         <label class="btn" for="multiTxtFileInput">Chọn nhiều TXT</label>
         <input id="multiTxtFileInput" type="file" accept=".txt,text/plain" multiple style="display:none">
+        <label class="btn" for="multiTxtFolderInput">Chọn thư mục TXT</label>
+        <input id="multiTxtFolderInput" type="file" accept=".txt,text/plain" webkitdirectory directory multiple style="display:none">
         <button class="btn" id="btnCopyPanelTxt" type="button">Copy ô TXT</button>
         <button class="btn ghost" id="btnSendPanelToInput" type="button">Đưa vào ô văn bản gốc</button>
         <button class="btn ghost" id="btnClearPanelTxt" type="button">Xóa ô TXT</button>
-        <button class="btn warn" id="btnDownloadPanelTxt" type="button">Tải TXT gộp</button>
+        <button class="btn warn" id="btnDownloadPanelTxt" type="button">Lọc & tải TXT</button>
       </div>
-      <div class="drawer-note">Tool sẽ giữ đúng thứ tự tệp theo danh sách trả về từ trình chọn file (thường là thứ tự bạn chọn).</div>
+      <div class="drawer-note">Tool sẽ tự đọc số chương trong tên file như <b>t1_c1.txt</b>, <b>t1_c60.txt</b>, sắp xếp lại đúng thứ tự, rồi lấy batch tiếp theo mỗi lần bấm.</div>
+
+      <div class="two" style="margin-top:8px">
+        <div class="field">
+          <label style="font-size:12px;color:var(--muted)">Số chương mỗi batch</label>
+          <input id="multiTxtBatchSize" class="drawer-input" type="number" min="1" step="1" value="60">
+        </div>
+        <div class="field">
+          <label style="font-size:12px;color:var(--muted)">Tên file gộp khi tải (tự động)</label>
+          <input id="multiTxtFileName" class="drawer-input" type="text" placeholder="tap_1.txt">
+        </div>
+      </div>
+
+      <div class="drawer-actions" style="margin-top:8px">
+        <label class="chip" style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input id="multiTxtAutoSort" type="checkbox" checked style="width:auto;margin:0">
+          Tự sort theo tên
+        </label>
+        <label class="chip" style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input id="multiTxtAutoBatch" type="checkbox" checked style="width:auto;margin:0">
+          Tự nhớ batch tiếp
+        </label>
+        <button class="btn ghost" id="btnResetMultiBatch" type="button">Reset batch</button>
+      </div>
+
+      <div class="drawer-note" id="multiTxtBatchInfo">Batch hiện tại: chưa có dữ liệu.</div>
       <div class="drawer-list" id="multiTxtFileList">Chưa chọn tệp TXT nào.</div>
-      <div class="field" style="margin-top:10px">
-        <label style="font-size:12px;color:var(--muted)">Tên file gộp khi tải (tùy chọn)</label>
-        <input id="multiTxtFileName" class="drawer-input" type="text" placeholder="vd: tap_gop.txt">
-      </div>
     </div>
 
     <div class="drawer-card">
@@ -178,7 +201,7 @@
   </div>
   <div class="header">
     <div>
-      <div class="title">Tool cắt & làm sạch chương truyện (v11.1)</div>
+      <div class="title">Tool cắt & làm sạch chương truyện (v12 PRO)</div>
       <div class="subtitle">Hỗ trợ <b>mốc bắt đầu</b> và <b>mốc kết thúc</b> theo <b>thứ tự ưu tiên</b> • mỗi dòng 1 mốc • <b>tự lưu cài đặt mốc</b> • <b>tự nhớ tên file TXT</b> • <b>tự tăng số tên file</b></div>
     </div>
     <div class="stats">
@@ -294,7 +317,7 @@ uukanshu
 
     <div class="footer">
       <div>✅ Offline • ✅ GitHub Pages • ✅ 3 gạch ngang/panel riêng • ✅ Mở nhiều TXT cùng lúc • ✅ Copy xong tự xóa panel TXT • ✅ Tự xóa sau khi tải</div>
-      <div class="mono">v11.1-copy-clear-panel</div>
+      <div class="mono">v12-pro-chapter-batch</div>
     </div>
   </div>
 </div>
@@ -340,7 +363,13 @@ Object.assign(els, {
   drawerPanel: document.getElementById('drawerPanel'),
   drawerBackdrop: document.getElementById('drawerBackdrop'),
   multiTxtFileInput: document.getElementById('multiTxtFileInput'),
+  multiTxtFolderInput: document.getElementById('multiTxtFolderInput'),
+  multiTxtBatchSize: document.getElementById('multiTxtBatchSize'),
+  multiTxtAutoSort: document.getElementById('multiTxtAutoSort'),
+  multiTxtAutoBatch: document.getElementById('multiTxtAutoBatch'),
+  btnResetMultiBatch: document.getElementById('btnResetMultiBatch'),
   multiTxtFileList: document.getElementById('multiTxtFileList'),
+  multiTxtBatchInfo: document.getElementById('multiTxtBatchInfo'),
   multiTxtTextarea: document.getElementById('multiTxtTextarea'),
   multiTxtMeta: document.getElementById('multiTxtMeta'),
   btnCopyPanelTxt: document.getElementById('btnCopyPanelTxt'),
@@ -628,6 +657,7 @@ function sanitizeFileName(name){
 }
 
 const LAST_DOWNLOADED_HASH_KEY = 'tool_cat_doan_truyen_last_downloaded_hash_v1';
+const MULTI_BATCH_STATE_KEY = 'tool_multi_txt_batch_state_v1';
 
 function simpleTextHash(str){
   const s = String(str || '');
@@ -737,6 +767,96 @@ function closeDrawerPanel(){
   els.drawerBackdrop.classList.remove('show');
   els.drawerPanel.setAttribute('aria-hidden', 'true');
 }
+
+function loadMultiBatchState(){
+  try{
+    const raw = localStorage.getItem(MULTI_BATCH_STATE_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    return (data && typeof data === 'object') ? data : {};
+  }catch(err){
+    return {};
+  }
+}
+function saveMultiBatchState(state){
+  try{
+    localStorage.setItem(MULTI_BATCH_STATE_KEY, JSON.stringify(state || {}));
+  }catch(err){}
+}
+function resetMultiBatchState(){
+  try{
+    localStorage.removeItem(MULTI_BATCH_STATE_KEY);
+    __multiTxtLastBatchSummary = [];
+    __multiTxtCurrentBatchNo = 1;
+    renderMultiTxtFileList();
+    setStatus('✅ Đã reset batch TXT về chương 1 cho tất cả nhóm tên file.', 'ok');
+  }catch(err){
+    setStatus('⚠️ Không reset được batch TXT.', 'warn');
+  }
+}
+function getMultiBatchSize(){
+  const n = parseInt((els.multiTxtBatchSize && els.multiTxtBatchSize.value) || '60', 10);
+  return Number.isFinite(n) && n > 0 ? n : 60;
+}
+function getBatchNoFromStart(start, batchSize){
+  const s = parseInt(start, 10) || 1;
+  const b = parseInt(batchSize, 10) || 60;
+  return Math.max(1, Math.floor((s - 1) / b) + 1);
+}
+function normalizeForSort(name){
+  return String(name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+function naturalCompare(a, b){
+  return normalizeForSort(a).localeCompare(normalizeForSort(b), 'vi', {numeric:true, sensitivity:'base'});
+}
+function splitStemAndExt(fileName){
+  const m = String(fileName || '').match(/^(.*?)(\.[^.]+)?$/);
+  return {
+    stem: (m && m[1]) ? m[1] : '',
+    ext: (m && m[2]) ? m[2] : ''
+  };
+}
+function parseChapterFileInfo(file){
+  const name = String(file && file.name ? file.name : file || '');
+  const {stem, ext} = splitStemAndExt(name);
+  const cleanStem = stem.replace(/\s+/g, ' ').trim();
+
+  let chapterNo = 0;
+  let storyKey = '';
+  let baseStem = cleanStem || 'file';
+
+  const m1 = cleanStem.match(/^(.*?)[ _.-]*(?:c|chap(?:ter)?|chuong|chương)[ _.-]*(\d+)$/i);
+  const m2 = cleanStem.match(/^(.*?)[ _.-]*(\d+)$/i);
+
+  if (m1){
+    storyKey = (m1[1] || '').replace(/[ _.-]+$/g, '').trim();
+    chapterNo = parseInt(m1[2], 10) || 0;
+    baseStem = cleanStem;
+  }else if (m2){
+    storyKey = (m2[1] || '').replace(/[ _.-]+$/g, '').trim();
+    chapterNo = parseInt(m2[2], 10) || 0;
+    baseStem = cleanStem;
+  }
+
+  if (!storyKey){
+    storyKey = 'default';
+  }
+
+  return {
+    name,
+    stem: cleanStem,
+    ext,
+    storyKey,
+    chapterNo,
+    hasChapter: chapterNo > 0,
+    sortName: normalizeForSort(cleanStem),
+    baseStem
+  };
+}
+
+
+let __multiTxtLastBatchSummary = [];
+let __multiTxtCurrentBatchNo = 1;
+
 function updateMultiTxtMeta(){
   const txt = String((els.multiTxtTextarea && els.multiTxtTextarea.value) || '');
   const fileCount = __multiTxtPickedFiles.length;
@@ -761,8 +881,11 @@ function updateMultiTxtMeta(){
   const x3 = formatTime(calc(wordCount,654));
 
   if (els.multiTxtMeta){
+    const batchText = __multiTxtLastBatchSummary.length
+      ? ('\nBatch: ' + __multiTxtLastBatchSummary.join(' | '))
+      : '';
     els.multiTxtMeta.textContent =
-      'Tổng tệp: ' + fileCount + ' | Ký tự: ' + charCount + ' | Từ: ' + wordCount + '\n' +
+      'Tổng tệp: ' + fileCount + ' | Ký tự: ' + charCount + ' | Từ: ' + wordCount + batchText + '\n' +
       'X1 = ' + x1 + '\n' +
       'X1.5 = ' + x15 + '\n' +
       'X2 = ' + x2 + '\n' +
@@ -773,13 +896,24 @@ function renderMultiTxtFileList(){
   if (!els.multiTxtFileList) return;
   if (!__multiTxtPickedFiles.length){
     els.multiTxtFileList.innerHTML = 'Chưa chọn tệp TXT nào.';
+    if (els.multiTxtBatchInfo){
+      els.multiTxtBatchInfo.textContent = 'Batch hiện tại: chưa có dữ liệu.';
+    }
     updateMultiTxtMeta();
     return;
   }
   els.multiTxtFileList.innerHTML = __multiTxtPickedFiles.map((f, idx) => {
     const size = Number(f.size || 0).toLocaleString('vi-VN');
-    return `<div class="item">${idx+1}. <b>${f.name}</b> • ${size} byte</div>`;
+    const meta = f.__chapterInfo && f.__chapterInfo.hasChapter
+      ? ` • ${f.__chapterInfo.storyKey} / c${f.__chapterInfo.chapterNo}`
+      : '';
+    return `<div class="item">${idx+1}. <b>${f.name}</b>${meta} • ${size} byte</div>`;
   }).join('');
+  if (els.multiTxtBatchInfo){
+    els.multiTxtBatchInfo.textContent = __multiTxtLastBatchSummary.length
+      ? `Batch hiện tại: ${__multiTxtLastBatchSummary.join(' | ')}`
+      : 'Batch hiện tại: đã sắp xếp theo tên file.';
+  }
   updateMultiTxtMeta();
 }
 function readTxtFileAsText(file){
@@ -790,19 +924,120 @@ function readTxtFileAsText(file){
     reader.readAsText(file, 'utf-8');
   });
 }
+function buildMultiTxtSelection(fileList){
+  const files = Array.from(fileList || []);
+  const txtFiles = files.filter(f => /\.txt$/i.test(f.name) || f.type === 'text/plain' || !f.type);
+  const parsed = txtFiles.map((file, index) => ({ file, index, info: parseChapterFileInfo(file) }));
+
+  const hasParsed = parsed.some(x => x.info.hasChapter);
+  const batchSize = getMultiBatchSize();
+
+  if (!hasParsed){
+    const sorted = els.multiTxtAutoSort && els.multiTxtAutoSort.checked
+      ? parsed.slice().sort((a, b) => naturalCompare(a.file.name, b.file.name))
+      : parsed.slice();
+    return {
+      selected: sorted.map(x => x.file),
+      parsed: sorted,
+      summaries: ['Không đọc được số chương trong tên file → dùng thứ tự file gốc.'],
+      hasParsed: false
+    };
+  }
+
+  const state = loadMultiBatchState();
+  const groups = new Map();
+
+  for (const item of parsed){
+    if (!item.info.hasChapter) continue;
+    const key = item.info.storyKey || 'default';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+
+  const selected = [];
+  const summaries = [];
+  const groupKeys = Array.from(groups.keys()).sort((a, b) => naturalCompare(a, b));
+  let primaryBatchNo = 1;
+
+  for (const storyKey of groupKeys){
+    const items = groups.get(storyKey).slice().sort((a, b) => {
+      if (a.info.chapterNo !== b.info.chapterNo) return a.info.chapterNo - b.info.chapterNo;
+      return a.index - b.index;
+    });
+
+    const current = state[storyKey] || { nextStart: 1 };
+    const start = (els.multiTxtAutoBatch && els.multiTxtAutoBatch.checked)
+      ? (parseInt(current.nextStart, 10) || 1)
+      : 1;
+    const end = start + batchSize - 1;
+    const batchNo = getBatchNoFromStart(start, batchSize);
+    if (primaryBatchNo === 1 && selected.length === 0) primaryBatchNo = batchNo;
+
+    const picked = items.filter(it => it.info.chapterNo >= start && it.info.chapterNo <= end);
+    selected.push(...picked);
+    summaries.push(`${storyKey}: ${start}-${end} (batch ${batchNo}, ${picked.length}/${items.length})`);
+
+    if (els.multiTxtAutoBatch && els.multiTxtAutoBatch.checked){
+      state[storyKey] = {
+        nextStart: end + 1,
+        lastStart: start,
+        lastEnd: end,
+        lastPicked: picked.length,
+        lastBatchNo: batchNo
+      };
+    }
+  }
+
+  if (els.multiTxtAutoBatch && els.multiTxtAutoBatch.checked){
+    saveMultiBatchState(state);
+  }
+
+  selected.sort((a, b) => {
+    const ak = a.info.storyKey;
+    const bk = b.info.storyKey;
+    if (ak !== bk) return naturalCompare(ak, bk);
+    if (a.info.chapterNo !== b.info.chapterNo) return a.info.chapterNo - b.info.chapterNo;
+    return a.index - b.index;
+  });
+
+  return {
+    selected: selected.map(x => x.file),
+    parsed: selected,
+    summaries,
+    hasParsed: true,
+    batchNo: primaryBatchNo || 1
+  };
+}
 async function handleMultiTxtSelect(fileList){
   const files = Array.from(fileList || []);
   if (!files.length){
     setStatus('⚠️ Bạn chưa chọn tệp TXT nào.', 'warn');
     return;
   }
-  const txtFiles = files.filter(f => /\.txt$/i.test(f.name) || f.type === 'text/plain' || !f.type);
+
+  const built = buildMultiTxtSelection(files);
+  const txtFiles = built.selected || [];
   if (!txtFiles.length){
-    setStatus('⚠️ Không có tệp TXT hợp lệ.', 'warn');
+    setStatus('⚠️ Không có tệp TXT hợp lệ để gộp.', 'warn');
     return;
   }
 
   __multiTxtPickedFiles = txtFiles.slice();
+  __multiTxtLastBatchSummary = (built.summaries || []).slice();
+  __multiTxtCurrentBatchNo = Number(built.batchNo || 1) || 1;
+
+  if (built.parsed && built.parsed.length){
+    for (const item of built.parsed){
+      try{
+        if (item.info && item.info.hasChapter){
+          item.file.__chapterInfo = item.info;
+        }else{
+          delete item.file.__chapterInfo;
+        }
+      }catch(e){}
+    }
+  }
+
   renderMultiTxtFileList();
 
   const chunks = [];
@@ -817,27 +1052,19 @@ async function handleMultiTxtSelect(fileList){
     }
   }
 
-  // Gộp thành 1 để copy luôn (không thêm tiêu đề phân cách để văn bản sạch hơn)
   const merged = chunks.filter(Boolean).join('\n\n').trim();
   if (els.multiTxtTextarea){
     els.multiTxtTextarea.value = merged;
     updateMultiTxtMeta();
   }
 
-  // Gợi ý tên file gộp (tự động) để bấm tải 1 phát là xong
   if (els.multiTxtFileName){
-    const first = txtFiles[0] ? txtFiles[0].name : '';
-    const p = splitFileNameParts(first || getDefaultPanelTxtFileName());
-    let baseStem = String(p.stem || 'gop_txt').replace(/\d+$/,'').trim();
-    if (!baseStem) baseStem = 'gop_txt';
-    const count = txtFiles.length;
-    els.multiTxtFileName.value = (count <= 1)
-      ? sanitizeFileName(first || 'tap.txt')
-      : sanitizeFileName(`${baseStem}_gop_${count}tep${p.ext || '.txt'}`);
+    els.multiTxtFileName.value = `tap_${__multiTxtCurrentBatchNo}.txt`;
   }
 
   openDrawerPanel();
-  setStatus(`✅ Đã mở ${okCount}/${txtFiles.length} tệp TXT vào không gian riêng (ô văn bản TXT).`, 'ok');
+  const batchMsg = built.summaries && built.summaries.length ? ` • ${built.summaries.join(' | ')}` : '';
+  setStatus(`✅ Đã lọc & mở ${okCount}/${txtFiles.length} tệp TXT vào batch hiện tại.${batchMsg}`, 'ok');
 }
 async function copyPanelTxt(){
   const txt = String((els.multiTxtTextarea && els.multiTxtTextarea.value) || '');
@@ -873,11 +1100,8 @@ function downloadPanelTxt(){
     return;
   }
 
-  const rawName = (els.multiTxtFileName && String(els.multiTxtFileName.value || '').trim())
-    ? els.multiTxtFileName.value
-    : getDefaultPanelTxtFileName();
-
-  const fileName = sanitizeFileName(rawName);
+  const batchNo = Math.max(1, parseInt(__multiTxtCurrentBatchNo, 10) || 1);
+  const fileName = `tap_${batchNo}.txt`;
 
   const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
   const url = URL.createObjectURL(blob);
@@ -909,8 +1133,11 @@ function sendPanelTxtToInput(){
 }
 function clearPanelTxt(){
   __multiTxtPickedFiles = [];
+  __multiTxtLastBatchSummary = [];
   if (els.multiTxtTextarea) els.multiTxtTextarea.value = '';
-  renderMultiTxtFileList();
+  if (els.multiTxtFileList) els.multiTxtFileList.innerHTML = 'Chưa chọn tệp TXT nào.';
+  if (els.multiTxtBatchInfo) els.multiTxtBatchInfo.textContent = 'Batch hiện tại: chưa có dữ liệu.';
+  updateMultiTxtMeta();
   setStatus('🧹 Đã xóa danh sách tệp và ô văn bản TXT trong không gian riêng.', 'ok');
 }
 
@@ -954,9 +1181,16 @@ if (els.multiTxtFileInput){
     e.target.value = '';
   });
 }
+if (els.multiTxtFolderInput){
+  els.multiTxtFolderInput.addEventListener('change', async (e) => {
+    await handleMultiTxtSelect(e.target.files);
+    e.target.value = '';
+  });
+}
 if (els.btnCopyPanelTxt) els.btnCopyPanelTxt.addEventListener('click', copyPanelTxt);
 if (els.btnSendPanelToInput) els.btnSendPanelToInput.addEventListener('click', sendPanelTxtToInput);
 if (els.btnClearPanelTxt) els.btnClearPanelTxt.addEventListener('click', clearPanelTxt);
+if (els.btnResetMultiBatch) els.btnResetMultiBatch.addEventListener('click', resetMultiBatchState);
 if (els.multiTxtTextarea) els.multiTxtTextarea.addEventListener('input', updateMultiTxtMeta);
 
 document.addEventListener('keydown', e => {
@@ -989,6 +1223,12 @@ updateStats();
 if (els.txtFileName && !String(els.txtFileName.value || '').trim()){
   els.txtFileName.value = 'truyenchu.txt';
   try { saveSettingsToLocal(); } catch(e) {}
+}
+if (els.multiTxtBatchSize && !String(els.multiTxtBatchSize.value || '').trim()){
+  els.multiTxtBatchSize.value = '60';
+}
+if (els.multiTxtBatchInfo && !String(els.multiTxtBatchInfo.textContent || '').trim()){
+  els.multiTxtBatchInfo.textContent = 'Batch hiện tại: chưa có dữ liệu.';
 }
 
 if (__restoredSettings){
@@ -1077,33 +1317,6 @@ els.input.addEventListener('input', () => {
 
 
 // ===== FIX: download panel txt + auto increment =====
-let panelDownloadCounter = 0;
-
-function downloadPanelTxt(){
-  const txt = String((els.multiTxtTextarea && els.multiTxtTextarea.value) || '');
-  if (!txt){
-    setStatus('⚠️ Ô văn bản TXT đang trống, không có gì để tải.', 'warn');
-    return;
-  }
-
-  panelDownloadCounter++;
-  const fileName = `tap_${panelDownloadCounter}.txt`;
-
-  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-
-  clearPanelTxt();
-
-  setStatus(`✅ Đã tải TXT gộp: <b>${fileName}</b>`, 'ok');
-}
-
 // bind button
 if (document.getElementById('btnDownloadPanelTxt')){
   document.getElementById('btnDownloadPanelTxt').addEventListener('click', downloadPanelTxt);
