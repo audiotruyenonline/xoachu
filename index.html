@@ -529,6 +529,33 @@ function updateStats(){
   els.statInput.textContent = `Input: ${els.input.value.length.toLocaleString('vi-VN')} ký tự`;
   els.statOutput.textContent = `Output: ${els.output.value.length.toLocaleString('vi-VN')} ký tự`;
 }
+function showInputFromTop(){
+  try{
+    try { els.input.focus({ preventScroll: true }); } catch (e) { try { els.input.focus(); } catch (_) {} }
+    els.input.scrollTop = 0;
+    els.input.selectionStart = 0;
+    els.input.selectionEnd = 0;
+    els.input.setSelectionRange(0, 0);
+  }catch(e){}
+  try{
+    requestAnimationFrame(() => {
+      try{
+        els.input.scrollTop = 0;
+        els.input.selectionStart = 0;
+        els.input.selectionEnd = 0;
+        els.input.setSelectionRange(0, 0);
+      }catch(e){}
+    });
+  }catch(e){}
+  setTimeout(() => {
+    try{
+      els.input.scrollTop = 0;
+      els.input.selectionStart = 0;
+      els.input.selectionEnd = 0;
+      els.input.setSelectionRange(0, 0);
+    }catch(e){}
+  }, 0);
+}
 function escapeRegExp(str){ return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function parseLines(value){
   return normalizeNewlines(value).split('\n').map(s=>s.trim()).filter(Boolean);
@@ -635,6 +662,23 @@ async function copyOutput(){
     }catch{ setStatus('⚠️ Không copy được. Hãy copy thủ công.', 'warn'); }
   }
 }
+function placeTextareaCaretAtStart(el){
+  if (!el) return;
+  try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (_) {} }
+  try { el.scrollTop = 0; } catch (e) {}
+  try { el.setSelectionRange(0, 0); } catch (e) {}
+  try {
+    requestAnimationFrame(() => {
+      try { el.scrollTop = 0; } catch (e) {}
+      try { el.setSelectionRange(0, 0); } catch (e) {}
+    });
+  } catch (e) {}
+  setTimeout(() => {
+    try { el.scrollTop = 0; } catch (e) {}
+    try { el.setSelectionRange(0, 0); } catch (e) {}
+  }, 0);
+}
+
 function getDefaultTxtFileName(){
   const now = new Date();
   const pad = n => String(n).padStart(2,'0');
@@ -748,7 +792,11 @@ async function pasteInput(){
   try{
     const txt = await navigator.clipboard.readText();
     if (!txt){ setStatus('⚠️ Clipboard không có văn bản.', 'warn'); return; }
-    els.input.value = txt; updateStats(); runOneClickClean(); setStatus('✅ Đã dán & tự làm sạch.', 'ok');
+    els.input.value = txt;
+    showInputFromTop();
+    updateStats();
+    runOneClickClean();
+    setStatus('✅ Đã dán & tự làm sạch.', 'ok');
   }catch{ setStatus('⚠️ Trình duyệt chặn đọc clipboard. Hãy dán thủ công.', 'warn'); }
 }
 
@@ -1127,6 +1175,7 @@ function sendPanelTxtToInput(){
     return;
   }
   els.input.value = txt;
+  showInputFromTop();
   updateStats();
   closeDrawerPanel();
   setStatus('✅ Đã đưa nội dung từ ô văn bản TXT vào ô văn bản gốc.', 'ok');
@@ -1143,7 +1192,12 @@ function clearPanelTxt(){
 
 function openTextFile(file){
   const reader = new FileReader();
-  reader.onload = e => { els.input.value = String(e.target.result || ''); updateStats(); setStatus(`✅ Đã mở file: <b>${file.name}</b>`, 'ok'); };
+  reader.onload = e => {
+    els.input.value = String(e.target.result || '');
+    showInputFromTop();
+    updateStats();
+    setStatus(`✅ Đã mở file: <b>${file.name}</b>`, 'ok');
+  };
   reader.onerror = () => setStatus('❌ Không đọc được file TXT.', 'err');
   reader.readAsText(file, 'utf-8');
 }
@@ -1152,11 +1206,11 @@ els.btnExtract.addEventListener('click', runExtract);
 els.btnOneClick.addEventListener('click', runOneClickClean);
 els.btnCopy.addEventListener('click', copyOutput);
 // els.btnDownloadTxt.addEventListener('click', downloadTxt);
-els.btnSwap.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để đưa lên ô trên.', 'warn');return;} els.input.value=els.output.value; els.output.value=''; updateStats(); setStatus('✅ Đã đưa kết quả lên ô trên.', 'ok'); });
-els.btnClearAll.addEventListener('click', ()=>{ els.input.value=''; els.output.value=''; updateStats(); setStatus('🧹 Đã xóa toàn bộ nội dung.', ''); });
+els.btnSwap.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để đưa lên ô trên.', 'warn');return;} els.input.value=els.output.value; els.output.value=''; showInputFromTop(); updateStats(); setStatus('✅ Đã đưa kết quả lên ô trên.', 'ok'); });
+els.btnClearAll.addEventListener('click', ()=>{ els.input.value=''; els.output.value=''; showInputFromTop(); updateStats(); setStatus('🧹 Đã xóa toàn bộ nội dung.', ''); });
 els.btnPaste.addEventListener('click', pasteInput);
-els.btnTrimInput.addEventListener('click', ()=>{ els.input.value = els.input.value.trim(); updateStats(); setStatus('✅ Đã xóa khoảng trắng đầu/cuối input.', 'ok'); });
-els.btnNormalize.addEventListener('click', ()=>{ els.input.value = normalizeNewlines(els.input.value); updateStats(); setStatus('✅ Đã chuẩn hóa xuống dòng.', 'ok'); });
+els.btnTrimInput.addEventListener('click', ()=>{ els.input.value = els.input.value.trim(); showInputFromTop(); updateStats(); setStatus('✅ Đã xóa khoảng trắng đầu/cuối input.', 'ok'); });
+els.btnNormalize.addEventListener('click', ()=>{ els.input.value = normalizeNewlines(els.input.value); showInputFromTop(); updateStats(); setStatus('✅ Đã chuẩn hóa xuống dòng.', 'ok'); });
 els.btnSelectOutput.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để chọn.', 'warn');return;} els.output.removeAttribute('readonly'); els.output.focus(); els.output.select(); els.output.setAttribute('readonly',''); setStatus('✅ Đã chọn toàn bộ kết quả.', 'ok'); });
 els.btnRemoveBlankLines.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để xử lý.', 'warn');return;} els.output.value = els.output.value.replace(/\n{3,}/g,'\n\n').trim(); updateStats(); setStatus('✅ Đã gộp dòng trống dư.', 'ok'); });
 els.btnRemoveWatermark.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để xử lý.', 'warn');return;} els.output.value = removeCommonNoise(els.output.value); updateStats(); setStatus('✅ Đã xóa watermark phổ biến + cụm từ xóa thêm.', 'ok'); });
@@ -1200,6 +1254,7 @@ document.addEventListener('keydown', e => {
 });
 
 els.input.addEventListener('input', updateStats);
+els.input.addEventListener('paste', () => { setTimeout(() => showInputFromTop(), 0); });
 els.output.addEventListener('input', updateStats);
 
 // Khôi phục cài đặt mốc đã lưu (nếu có) + tự động lưu khi người dùng chỉnh
@@ -1312,6 +1367,7 @@ els.input.addEventListener('input', () => {
   clearTimeout(autoCleanTimeout);
   autoCleanTimeout = setTimeout(() => {
     runOneClickClean();
+    setTimeout(() => placeTextareaCaretAtStart(els.input), 0);
   }, 200); // delay nhẹ tránh lag
 });
 
