@@ -150,8 +150,7 @@
         <label class="btn" for="multiTxtFolderInput">Chọn thư mục TXT</label>
         <input id="multiTxtFolderInput" type="file" accept=".txt,text/plain" webkitdirectory directory multiple style="display:none">
         <button class="btn" id="btnCopyPanelTxt" type="button">Copy ô TXT</button>
-        <button class="btn ghost" id="btnSendPanelToInput" type="button">Đưa vào ô văn bản gốc</button>
-        <button class="btn ghost" id="btnClearPanelTxt" type="button">Xóa ô TXT</button>
+                <button class="btn ghost" id="btnClearPanelTxt" type="button">Xóa ô TXT</button>
         <button class="btn warn" id="btnDownloadPanelTxt" type="button">Lọc & tải TXT</button>
       </div>
       <div class="drawer-note">Tool sẽ tự đọc số chương trong tên file như <b>t1_c1.txt</b>, <b>t1_c60.txt</b>, sắp xếp lại đúng thứ tự, rồi lấy batch tiếp theo mỗi lần bấm.</div>
@@ -177,6 +176,7 @@
           Tự nhớ batch tiếp
         </label>
         <button class="btn ghost" id="btnResetMultiBatch" type="button">Reset batch</button>
+        <button class="btn ghost" id="btnResetMultiFileName" type="button">Reset tên tập</button>
       </div>
 
       <div class="drawer-note" id="multiTxtBatchInfo">Batch hiện tại: chưa có dữ liệu.</div>
@@ -373,7 +373,6 @@ Object.assign(els, {
   multiTxtTextarea: document.getElementById('multiTxtTextarea'),
   multiTxtMeta: document.getElementById('multiTxtMeta'),
   btnCopyPanelTxt: document.getElementById('btnCopyPanelTxt'),
-  btnSendPanelToInput: document.getElementById('btnSendPanelToInput'),
   btnClearPanelTxt: document.getElementById('btnClearPanelTxt')
 });
 
@@ -836,9 +835,22 @@ function resetMultiBatchState(){
     __multiTxtLastBatchSummary = [];
     __multiTxtCurrentBatchNo = 1;
     renderMultiTxtFileList();
-    setStatus('✅ Đã reset batch TXT về chương 1 cho tất cả nhóm tên file.', 'ok');
+    setStatus('✅ Đã reset batch TXT về chương 1. Tên tập tải về không đổi.', 'ok');
   }catch(err){
     setStatus('⚠️ Không reset được batch TXT.', 'warn');
+  }
+}
+
+function resetMultiFileName(){
+  try{
+    __multiTxtCurrentBatchNo = 1;
+    if (els.multiTxtFileName){
+      els.multiTxtFileName.value = 'tap_1.txt';
+      try { saveSettingsToLocal(); } catch(e) {}
+    }
+    setStatus('✅ Đã reset tên tập tải về về tap_1.txt.', 'ok');
+  }catch(err){
+    setStatus('⚠️ Không reset được tên tập tải về.', 'warn');
   }
 }
 function getMultiBatchSize(){
@@ -1242,9 +1254,9 @@ if (els.multiTxtFolderInput){
   });
 }
 if (els.btnCopyPanelTxt) els.btnCopyPanelTxt.addEventListener('click', copyPanelTxt);
-if (els.btnSendPanelToInput) els.btnSendPanelToInput.addEventListener('click', sendPanelTxtToInput);
 if (els.btnClearPanelTxt) els.btnClearPanelTxt.addEventListener('click', clearPanelTxt);
 if (els.btnResetMultiBatch) els.btnResetMultiBatch.addEventListener('click', resetMultiBatchState);
+if (document.getElementById('btnResetMultiFileName')) document.getElementById('btnResetMultiFileName').addEventListener('click', resetMultiFileName);
 if (els.multiTxtTextarea) els.multiTxtTextarea.addEventListener('input', updateMultiTxtMeta);
 
 document.addEventListener('keydown', e => {
