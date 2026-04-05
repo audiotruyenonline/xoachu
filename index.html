@@ -639,16 +639,108 @@ function removeCommonNoise(text){
   t = removeExtraPhrases(t);
   return t.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
 }
+const MIN_CHAPTER_LENGTH = 4000;
+
+const NON_CHAPTER_KEYWORDS = [
+  'lên khung cảm nghĩ'
+];
+
+const NON_CHAPTER_PATTERNS = [
+  /lên\s*khung\s*cảm\s*nghĩ/i
+];
+
+// Chặn tuyệt đối: gặp cụm này thì loại ngay, không xét độ dài.
+const ALWAYS_REJECT_PATTERNS = [
+  /lên\s*khung\s*cảm\s*nghĩ/i
+];
+
+const CHAPTER_TITLE_PATTERNS = [
+  /(^|\n)\s*(chương|chapter|chap|quyển)\s*(\d+|[ivxlcdm]+)\b/i,
+  /(^|\n)\s*第\s*\d+\s*章/i
+];
+
+function normalizeTextForCheck(text){
+  return String(text || '')
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function hasAlwaysRejectSignal(text){
+  const t = normalizeTextForCheck(text);
+  return ALWAYS_REJECT_PATTERNS.some(re => re.test(t)) || t.includes('lên khung cảm nghĩ');
+}
+
+function hasAlwaysRejectSignalInRawText(rawText){
+  return hasAlwaysRejectSignal(rawText);
+}
+
+function isLikelyNonChapter(text){
+  const t = normalizeTextForCheck(text);
+  return t.includes('lên khung cảm nghĩ') || NON_CHAPTER_PATTERNS.some(re => re.test(t));
+}
+
+function hasChapterStructure(text){
+  const t = String(text || '');
+  return CHAPTER_TITLE_PATTERNS.some(re => re.test(t));
+}
+
+function clearAllOnReject(message){
+  els.input.value = '';
+  els.output.value = '';
+  updateStats();
+  setStatus(message, 'warn');
+  try { placeTextareaCaretAtStart(els.input); } catch (e) {}
+}
+
+function applyChapterLengthFilter(text){
+  const cleaned = removeCommonNoise(text);
+
+  // Cụm này bị loại ngay, bất kể dài bao nhiêu ký tự.
+  if (hasAlwaysRejectSignal(cleaned)) return '';
+
+  const len = cleaned.trim().length;
+  if (len < MIN_CHAPTER_LENGTH) return '';
+  if (isLikelyNonChapter(cleaned)) return '';
+  if (!hasChapterStructure(cleaned) && /lên\s*khung\s*cảm\s*nghĩ/i.test(cleaned)) return '';
+  return cleaned;
+}
+
 function runExtract(){
+  if (hasAlwaysRejectSignalInRawText(els.input.value)){
+    clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+    return;
+  }
+
   const res = extractStoryContentPriority(els.input.value);
-  if (!res.ok){ els.output.value=''; updateStats(); setStatus('❌ ' + res.error, 'err'); return; }
-  els.output.value = res.text; updateStats();
-  setStatus(`✅ Đã lấy đoạn truyện. Start: <b>${res.usedStart}</b> (${res.usedStartSource}) • End: <b>${res.usedEnd}</b> (${res.usedEndSource}) • <b>${res.text.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
+  if (!res.ok){ clearAllOnReject('❌ ' + res.error); return; }
+
+  const filtered = applyChapterLengthFilter(res.text);
+  if (!filtered){
+    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc có dấu hiệu lên khung cảm nghĩ (không phân biệt hoa/thường) → đã xóa hết để dán chương mới.`);
+    return;
+  }
+
+  els.output.value = filtered; updateStats();
+  setStatus(`✅ Đã giữ chương hợp lệ. Start: <b>${res.usedStart}</b> (${res.usedStartSource}) • End: <b>${res.usedEnd}</b> (${res.usedEndSource}) • <b>${filtered.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
 }
 function runOneClickClean(){
+  if (hasAlwaysRejectSignalInRawText(els.input.value)){
+    clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+    return;
+  }
+
   const res = extractStoryContentPriority(els.input.value);
-  if (!res.ok){ els.output.value=''; updateStats(); setStatus('❌ ' + res.error, 'err'); return; }
-  els.output.value = removeCommonNoise(res.text); updateStats();
+  if (!res.ok){ clearAllOnReject('❌ ' + res.error); return; }
+
+  const filtered = applyChapterLengthFilter(res.text);
+  if (!filtered){
+    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc có dấu hiệu lên khung cảm nghĩ (không phân biệt hoa/thường) → đã xóa hết để dán chương mới.`);
+    return;
+  }
+
+  els.output.value = filtered; updateStats();
   setStatus(`✅ Làm sạch 1 chạm xong. Start: <b>${res.usedStart}</b> • End: <b>${res.usedEnd}</b> • <b>${els.output.value.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
 }
 async function copyOutput(){
@@ -734,7 +826,16 @@ function downloadTxt(){
     return;
   }
 
-  const currentText = String(els.output.value || '');
+  const currentText = String(els.output.value || '').trim();
+  if (!currentText || currentText.length < MIN_CHAPTER_LENGTH || isLikelyNonChapter(currentText) || (!hasChapterStructure(currentText) && /tác giả|thông báo|cảm nghĩ|xin nghỉ|cầu đặt trước|lên khung|nguyệt phiếu|khen thưởng/i.test(currentText))){
+    els.input.value = '';
+    els.output.value = '';
+    updateStats();
+    setStatus(`⚠️ Nội dung không đạt chuẩn chương truyện (lên khung cảm nghĩ) → đã xóa hết và không tải.`, 'warn');
+    try { placeTextareaCaretAtStart(els.input); } catch (e) {}
+    return;
+  }
+
   const currentHash = simpleTextHash(currentText);
 
   if (lastDownloadedHash && lastDownloadedHash === currentHash){
@@ -794,7 +895,17 @@ async function pasteInput(){
     els.input.value = txt;
     showInputFromTop();
     updateStats();
+
+    if (hasAlwaysRejectSignalInRawText(els.input.value)){
+      clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+      return;
+    }
+
     runOneClickClean();
+
+    if (!els.input.value && !els.output.value){
+      return;
+    }
     setStatus('✅ Đã dán & tự làm sạch.', 'ok');
   }catch{ setStatus('⚠️ Trình duyệt chặn đọc clipboard. Hãy dán thủ công.', 'warn'); }
 }
@@ -1378,6 +1489,10 @@ let autoCleanTimeout;
 els.input.addEventListener('input', () => {
   clearTimeout(autoCleanTimeout);
   autoCleanTimeout = setTimeout(() => {
+    if (hasAlwaysRejectSignalInRawText(els.input.value)){
+      clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+      return;
+    }
     runOneClickClean();
     setTimeout(() => placeTextareaCaretAtStart(els.input), 0);
   }, 200); // delay nhẹ tránh lag
