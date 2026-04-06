@@ -861,21 +861,14 @@ function saveLastDownloadedHash(hash){
 let lastDownloadedHash = loadLastDownloadedHash();
 
 function downloadTxt(){
-  if (!els.output.value){
+  const currentText = String(els.output.value || '').trim();
+
+  if (!currentText){
     setStatus('⚠️ Chưa có kết quả để tải TXT.', 'warn');
     return;
   }
 
-  const currentText = String(els.output.value || '').trim();
-  if (!currentText || currentText.length < MIN_CHAPTER_LENGTH || isLikelyNonChapter(currentText) || (!hasChapterStructure(currentText) && /tác giả|thông báo|cảm nghĩ|xin nghỉ|cầu đặt trước|lên khung|nguyệt phiếu|khen thưởng/i.test(currentText))){
-    els.input.value = '';
-    els.output.value = '';
-    updateStats();
-    setStatus(`⚠️ Nội dung không đạt chuẩn chương truyện (lên khung cảm nghĩ) → đã xóa hết và không tải.`, 'warn');
-    try { placeTextareaCaretAtStart(els.input); } catch (e) {}
-    return;
-  }
-
+  // Chỉ tải đúng nội dung hiện có, không lọc lại nữa
   const currentHash = simpleTextHash(currentText);
 
   if (lastDownloadedHash && lastDownloadedHash === currentHash){
@@ -903,7 +896,7 @@ function downloadTxt(){
     try { saveSettingsToLocal(); } catch(e) {}
   }
 
-  const blob = new Blob([els.output.value], {type:'text/plain;charset=utf-8'});
+  const blob = new Blob([currentText], {type:'text/plain;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
