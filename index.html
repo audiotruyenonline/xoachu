@@ -47,10 +47,46 @@
     .row .btn{padding:8px 10px;font-size:13px}
     .drop{margin:0 12px 12px;border:1px dashed #34528b;border-radius:12px;padding:12px;text-align:center;color:var(--muted);background:rgba(78,161,255,.05);font-size:13px}
     .drop.drag{border-color:#67b4ff;background:rgba(78,161,255,.12);color:#d8ecff}
-    .status{margin:0 12px 12px;border-radius:12px;padding:10px 12px;border:1px solid var(--line);background:#101a2d;color:var(--muted);font-size:13px;min-height:42px;display:flex;align-items:center}
-    .status.ok{color:#b9ffe7;border-color:rgba(56,211,159,.35);background:rgba(56,211,159,.08)}
-    .status.err{color:#ffd1d1;border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.08)}
-    .status.warn{color:#ffe8c1;border-color:rgba(255,184,77,.35);background:rgba(255,184,77,.08)}
+    .status{
+  position:fixed;
+  top:76px;
+  right:12px;
+  z-index:9999;
+  max-width:min(92vw,380px);
+  min-height:auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0;
+  border-radius:16px;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  background:rgba(16,26,45,.96);
+  color:var(--muted);
+  font-size:13px;
+  box-shadow:0 14px 32px rgba(0,0,0,.38);
+  backdrop-filter: blur(10px);
+  opacity:0;
+  transform:translate3d(16px,-10px,0) scale(.98);
+  pointer-events:none;
+  transition:opacity .18s ease, transform .18s ease;
+}
+.status.show{
+  opacity:1;
+  transform:translate3d(0,0,0) scale(1);
+  pointer-events:auto;
+}
+.status.ok{color:#dffef1;border-color:rgba(56,211,159,.35);background:rgba(17,84,64,.96)}
+.status.err{color:#ffe0e0;border-color:rgba(255,107,107,.42);background:rgba(110,31,31,.96)}
+.status.warn{color:#fff0d1;border-color:rgba(255,184,77,.42);background:rgba(117,76,20,.96)}
+@media (max-width:560px){
+  .status{
+    top:68px;
+    right:8px;
+    left:8px;
+    max-width:none;
+  }
+}
     details{margin:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0f1728}
     summary{cursor:pointer;padding:10px 12px;color:#dbe8ff;font-weight:600;user-select:none}
     .detailsBody{border-top:1px solid var(--line);padding:12px;display:grid;gap:10px}
@@ -313,7 +349,7 @@ uukanshu
       </div>
     </div>
 
-    <div id="status" class="status">Sẵn sàng. Dán văn bản vào ô bên trái rồi bấm <b>Lấy đoạn truyện</b> hoặc <b>Làm sạch 1 chạm</b>.</div>
+    <div id="status" class="status" role="status" aria-live="polite">Sẵn sàng. Dán văn bản vào ô bên trái rồi bấm <b>Lấy đoạn truyện</b> hoặc <b>Làm sạch 1 chạm</b>.</div>
 
     <div class="footer">
       <div>✅ Offline • ✅ GitHub Pages • ✅ 3 gạch ngang/panel riêng • ✅ Mở nhiều TXT cùng lúc • ✅ Copy xong tự xóa panel TXT • ✅ Tự xóa sau khi tải</div>
@@ -518,10 +554,14 @@ function resetSavedSettings(){
   }
 }
 
+let __statusHideTimer = null;
 function setStatus(msg, type=''){
-
-  els.status.className = 'status' + (type ? ' ' + type : '');
+  if (__statusHideTimer) clearTimeout(__statusHideTimer);
+  els.status.className = 'status show' + (type ? ' ' + type : '');
   els.status.innerHTML = msg;
+  __statusHideTimer = setTimeout(() => {
+    els.status.classList.remove('show');
+  }, 1000);
 }
 function normalizeNewlines(text){ return String(text || '').replace(/\r\n/g,'\n').replace(/\r/g,'\n'); }
 function updateStats(){
@@ -641,8 +681,22 @@ function removeCommonNoise(text){
 }
 const MIN_CHAPTER_LENGTH = 4000;
 
-const REJECT_CHAPTER_TITLE_PATTERNS = [
+const NON_CHAPTER_KEYWORDS = [
+  'lên khung cảm nghĩ'
+];
+
+const NON_CHAPTER_PATTERNS = [
   /lên\s*khung\s*cảm\s*nghĩ/i
+];
+
+// Chặn tuyệt đối: gặp cụm này thì loại ngay, không xét độ dài.
+const ALWAYS_REJECT_PATTERNS = [
+  /lên\s*khung\s*cảm\s*nghĩ/i
+];
+
+const CHAPTER_TITLE_PATTERNS = [
+  /(^|\n)\s*(chương|chapter|chap|quyển)\s*(\d+|[ivxlcdm]+)\b/i,
+  /(^|\n)\s*第\s*\d+\s*章/i
 ];
 
 function normalizeTextForCheck(text){
@@ -653,23 +707,23 @@ function normalizeTextForCheck(text){
     .trim();
 }
 
-function getLeadingLines(text, maxLines = 6){
-  const lines = normalizeNewlines(text)
-    .split('\n')
-    .map(s => s.trim())
-    .filter(Boolean);
-  return lines.slice(0, maxLines).join('\n');
+function hasAlwaysRejectSignal(text){
+  const t = normalizeTextForCheck(text);
+  return ALWAYS_REJECT_PATTERNS.some(re => re.test(t)) || t.includes('lên khung cảm nghĩ');
 }
 
-function getChapterTitleArea(text){
-  // Chỉ xét phần đầu chương: lấy vài dòng non-empty đầu tiên để nhận diện tên chương.
-  return getLeadingLines(text, 6);
+function hasAlwaysRejectSignalInRawText(rawText){
+  return hasAlwaysRejectSignal(rawText);
 }
 
-function hasRejectedChapterTitle(text){
-  const titleArea = normalizeTextForCheck(getChapterTitleArea(text));
-  if (!titleArea) return false;
-  return REJECT_CHAPTER_TITLE_PATTERNS.some(re => re.test(titleArea));
+function isLikelyNonChapter(text){
+  const t = normalizeTextForCheck(text);
+  return t.includes('lên khung cảm nghĩ') || NON_CHAPTER_PATTERNS.some(re => re.test(t));
+}
+
+function hasChapterStructure(text){
+  const t = String(text || '');
+  return CHAPTER_TITLE_PATTERNS.some(re => re.test(t));
 }
 
 function clearAllOnReject(message){
@@ -683,17 +737,19 @@ function clearAllOnReject(message){
 function applyChapterLengthFilter(text){
   const cleaned = removeCommonNoise(text);
 
-  // Chỉ loại khi tên/chủ đề chương ở phần đầu có dấu hiệu “lên khung cảm nghĩ”.
-  if (hasRejectedChapterTitle(cleaned)) return '';
+  // Cụm này bị loại ngay, bất kể dài bao nhiêu ký tự.
+  if (hasAlwaysRejectSignal(cleaned)) return '';
 
   const len = cleaned.trim().length;
   if (len < MIN_CHAPTER_LENGTH) return '';
+  if (isLikelyNonChapter(cleaned)) return '';
+  if (!hasChapterStructure(cleaned) && /lên\s*khung\s*cảm\s*nghĩ/i.test(cleaned)) return '';
   return cleaned;
 }
 
 function runExtract(){
-  if (hasRejectedChapterTitle(els.input.value)){
-    clearAllOnReject('⚠️ Phát hiện tên chương “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.');
+  if (hasAlwaysRejectSignalInRawText(els.input.value)){
+    clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
     return;
   }
 
@@ -702,7 +758,7 @@ function runExtract(){
 
   const filtered = applyChapterLengthFilter(res.text);
   if (!filtered){
-    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc tên chương có “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.`);
+    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc có dấu hiệu lên khung cảm nghĩ (không phân biệt hoa/thường) → đã xóa hết để dán chương mới.`);
     return;
   }
 
@@ -710,8 +766,8 @@ function runExtract(){
   setStatus(`✅ Đã giữ chương hợp lệ. Start: <b>${res.usedStart}</b> (${res.usedStartSource}) • End: <b>${res.usedEnd}</b> (${res.usedEndSource}) • <b>${filtered.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
 }
 function runOneClickClean(){
-  if (hasRejectedChapterTitle(els.input.value)){
-    clearAllOnReject('⚠️ Phát hiện tên chương “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.');
+  if (hasAlwaysRejectSignalInRawText(els.input.value)){
+    clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
     return;
   }
 
@@ -720,7 +776,7 @@ function runOneClickClean(){
 
   const filtered = applyChapterLengthFilter(res.text);
   if (!filtered){
-    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc tên chương có “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.`);
+    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc có dấu hiệu lên khung cảm nghĩ (không phân biệt hoa/thường) → đã xóa hết để dán chương mới.`);
     return;
   }
 
@@ -811,11 +867,11 @@ function downloadTxt(){
   }
 
   const currentText = String(els.output.value || '').trim();
-  if (!currentText || currentText.length < MIN_CHAPTER_LENGTH || hasRejectedChapterTitle(currentText)){
+  if (!currentText || currentText.length < MIN_CHAPTER_LENGTH || isLikelyNonChapter(currentText) || (!hasChapterStructure(currentText) && /tác giả|thông báo|cảm nghĩ|xin nghỉ|cầu đặt trước|lên khung|nguyệt phiếu|khen thưởng/i.test(currentText))){
     els.input.value = '';
     els.output.value = '';
     updateStats();
-    setStatus(`⚠️ Nội dung không đạt chuẩn chương truyện hoặc tên chương có “lên khung cảm nghĩ” → đã xóa hết và không tải.`, 'warn');
+    setStatus(`⚠️ Nội dung không đạt chuẩn chương truyện (lên khung cảm nghĩ) → đã xóa hết và không tải.`, 'warn');
     try { placeTextareaCaretAtStart(els.input); } catch (e) {}
     return;
   }
@@ -880,8 +936,8 @@ async function pasteInput(){
     showInputFromTop();
     updateStats();
 
-    if (hasRejectedChapterTitle(els.input.value)){
-      clearAllOnReject('⚠️ Phát hiện tên chương “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.');
+    if (hasAlwaysRejectSignalInRawText(els.input.value)){
+      clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
       return;
     }
 
@@ -1473,8 +1529,8 @@ let autoCleanTimeout;
 els.input.addEventListener('input', () => {
   clearTimeout(autoCleanTimeout);
   autoCleanTimeout = setTimeout(() => {
-    if (hasRejectedChapterTitle(els.input.value)){
-      clearAllOnReject('⚠️ Phát hiện tên chương “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.');
+    if (hasAlwaysRejectSignalInRawText(els.input.value)){
+      clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
       return;
     }
     runOneClickClean();
