@@ -641,22 +641,8 @@ function removeCommonNoise(text){
 }
 const MIN_CHAPTER_LENGTH = 4000;
 
-const NON_CHAPTER_KEYWORDS = [
-  'lên khung cảm nghĩ'
-];
-
-const NON_CHAPTER_PATTERNS = [
+const REJECT_CHAPTER_TITLE_PATTERNS = [
   /lên\s*khung\s*cảm\s*nghĩ/i
-];
-
-// Chặn tuyệt đối: gặp cụm này thì loại ngay, không xét độ dài.
-const ALWAYS_REJECT_PATTERNS = [
-  /lên\s*khung\s*cảm\s*nghĩ/i
-];
-
-const CHAPTER_TITLE_PATTERNS = [
-  /(^|\n)\s*(chương|chapter|chap|quyển)\s*(\d+|[ivxlcdm]+)\b/i,
-  /(^|\n)\s*第\s*\d+\s*章/i
 ];
 
 function normalizeTextForCheck(text){
@@ -667,23 +653,23 @@ function normalizeTextForCheck(text){
     .trim();
 }
 
-function hasAlwaysRejectSignal(text){
-  const t = normalizeTextForCheck(text);
-  return ALWAYS_REJECT_PATTERNS.some(re => re.test(t)) || t.includes('lên khung cảm nghĩ');
+function getLeadingLines(text, maxLines = 6){
+  const lines = normalizeNewlines(text)
+    .split('\n')
+    .map(s => s.trim())
+    .filter(Boolean);
+  return lines.slice(0, maxLines).join('\n');
 }
 
-function hasAlwaysRejectSignalInRawText(rawText){
-  return hasAlwaysRejectSignal(rawText);
+function getChapterTitleArea(text){
+  // Chỉ xét phần đầu chương: lấy vài dòng non-empty đầu tiên để nhận diện tên chương.
+  return getLeadingLines(text, 6);
 }
 
-function isLikelyNonChapter(text){
-  const t = normalizeTextForCheck(text);
-  return t.includes('lên khung cảm nghĩ') || NON_CHAPTER_PATTERNS.some(re => re.test(t));
-}
-
-function hasChapterStructure(text){
-  const t = String(text || '');
-  return CHAPTER_TITLE_PATTERNS.some(re => re.test(t));
+function hasRejectedChapterTitle(text){
+  const titleArea = normalizeTextForCheck(getChapterTitleArea(text));
+  if (!titleArea) return false;
+  return REJECT_CHAPTER_TITLE_PATTERNS.some(re => re.test(titleArea));
 }
 
 function clearAllOnReject(message){
@@ -697,19 +683,17 @@ function clearAllOnReject(message){
 function applyChapterLengthFilter(text){
   const cleaned = removeCommonNoise(text);
 
-  // Cụm này bị loại ngay, bất kể dài bao nhiêu ký tự.
-  if (hasAlwaysRejectSignal(cleaned)) return '';
+  // Chỉ loại khi tên/chủ đề chương ở phần đầu có dấu hiệu “lên khung cảm nghĩ”.
+  if (hasRejectedChapterTitle(cleaned)) return '';
 
   const len = cleaned.trim().length;
   if (len < MIN_CHAPTER_LENGTH) return '';
-  if (isLikelyNonChapter(cleaned)) return '';
-  if (!hasChapterStructure(cleaned) && /lên\s*khung\s*cảm\s*nghĩ/i.test(cleaned)) return '';
   return cleaned;
 }
 
 function runExtract(){
-  if (hasAlwaysRejectSignalInRawText(els.input.value)){
-    clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+  if (hasRejectedChapterTitle(els.input.value)){
+    clearAllOnReject('⚠️ Phát hiện tên chương “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.');
     return;
   }
 
@@ -718,7 +702,7 @@ function runExtract(){
 
   const filtered = applyChapterLengthFilter(res.text);
   if (!filtered){
-    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc có dấu hiệu lên khung cảm nghĩ (không phân biệt hoa/thường) → đã xóa hết để dán chương mới.`);
+    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc tên chương có “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.`);
     return;
   }
 
@@ -726,8 +710,8 @@ function runExtract(){
   setStatus(`✅ Đã giữ chương hợp lệ. Start: <b>${res.usedStart}</b> (${res.usedStartSource}) • End: <b>${res.usedEnd}</b> (${res.usedEndSource}) • <b>${filtered.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
 }
 function runOneClickClean(){
-  if (hasAlwaysRejectSignalInRawText(els.input.value)){
-    clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+  if (hasRejectedChapterTitle(els.input.value)){
+    clearAllOnReject('⚠️ Phát hiện tên chương “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.');
     return;
   }
 
@@ -736,7 +720,7 @@ function runOneClickClean(){
 
   const filtered = applyChapterLengthFilter(res.text);
   if (!filtered){
-    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc có dấu hiệu lên khung cảm nghĩ (không phân biệt hoa/thường) → đã xóa hết để dán chương mới.`);
+    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc tên chương có “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.`);
     return;
   }
 
@@ -827,11 +811,11 @@ function downloadTxt(){
   }
 
   const currentText = String(els.output.value || '').trim();
-  if (!currentText || currentText.length < MIN_CHAPTER_LENGTH || isLikelyNonChapter(currentText) || (!hasChapterStructure(currentText) && /tác giả|thông báo|cảm nghĩ|xin nghỉ|cầu đặt trước|lên khung|nguyệt phiếu|khen thưởng/i.test(currentText))){
+  if (!currentText || currentText.length < MIN_CHAPTER_LENGTH || hasRejectedChapterTitle(currentText)){
     els.input.value = '';
     els.output.value = '';
     updateStats();
-    setStatus(`⚠️ Nội dung không đạt chuẩn chương truyện (lên khung cảm nghĩ) → đã xóa hết và không tải.`, 'warn');
+    setStatus(`⚠️ Nội dung không đạt chuẩn chương truyện hoặc tên chương có “lên khung cảm nghĩ” → đã xóa hết và không tải.`, 'warn');
     try { placeTextareaCaretAtStart(els.input); } catch (e) {}
     return;
   }
@@ -896,8 +880,8 @@ async function pasteInput(){
     showInputFromTop();
     updateStats();
 
-    if (hasAlwaysRejectSignalInRawText(els.input.value)){
-      clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+    if (hasRejectedChapterTitle(els.input.value)){
+      clearAllOnReject('⚠️ Phát hiện tên chương “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.');
       return;
     }
 
@@ -1489,8 +1473,8 @@ let autoCleanTimeout;
 els.input.addEventListener('input', () => {
   clearTimeout(autoCleanTimeout);
   autoCleanTimeout = setTimeout(() => {
-    if (hasAlwaysRejectSignalInRawText(els.input.value)){
-      clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+    if (hasRejectedChapterTitle(els.input.value)){
+      clearAllOnReject('⚠️ Phát hiện tên chương “lên khung cảm nghĩ” → đã xóa chương này để dán chương mới.');
       return;
     }
     runOneClickClean();
