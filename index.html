@@ -446,7 +446,7 @@ function loadSettingsFromLocal(){
       if (el.type === 'checkbox') {
         el.checked = !!data[key];
       } else if (typeof data[key] === 'string') {
-        el.value = data[key];
+        el.value = (key === 'txtFileName') ? sanitizeMainFileBaseName(data[key]) : data[key];
       } else {
         continue;
       }
@@ -490,6 +490,19 @@ function splitFileNameParts(fileName){
   };
 }
 
+function sanitizeMainFileBaseName(name){
+  let n = String(name || '').trim();
+  n = n.replace(/\.txt$/i, '');
+  n = n.replace(/[\/:*?"<>|]/g, '_'); // ký tự không hợp lệ
+  n = n.replace(/\s+/g, ' ').trim();
+  if (!n) n = 'chuong_sach';
+  return n;
+}
+
+function makeMainDownloadFileName(name){
+  return sanitizeMainFileBaseName(name) + '.txt';
+}
+
 // Tự tăng: truyenchu.txt -> truyenchu1.txt -> truyenchu2.txt...
 function getAutoIncrementFileName(fileName){
   const p = splitFileNameParts(fileName);
@@ -525,7 +538,7 @@ function getAutoIncrementFileName(fileName){
 function resetCurrentFileCounter(){
   try{
     const rawName = (els.txtFileName && els.txtFileName.value) ? els.txtFileName.value : getDefaultTxtFileName();
-    const cleanName = sanitizeFileName(rawName);
+    const cleanName = makeMainDownloadFileName(rawName);
     const p = splitFileNameParts(cleanName);
     let baseStem = p.stem.replace(/\d+$/,'').trim();
     if (!baseStem) baseStem = p.stem || 'chuong_sach';
@@ -536,10 +549,10 @@ function resetCurrentFileCounter(){
     saveFileCounterMap(map);
 
     if (els.txtFileName){
-      els.txtFileName.value = `${baseStem}${p.ext}`;
+      els.txtFileName.value = baseStem;
       try { saveSettingsToLocal(); } catch(e) {}
     }
-    setStatus(`✅ Đã reset số tự tăng cho tên gốc: <b>${baseStem}${p.ext}</b>`, 'ok');
+    setStatus(`✅ Đã reset số tự tăng cho tên gốc: <b>${baseStem}</b>`, 'ok');
   }catch(err){
     setStatus('⚠️ Không reset được số tự tăng.', 'warn');
   }
@@ -813,7 +826,7 @@ function placeTextareaCaretAtStart(el){
 function getDefaultTxtFileName(){
   const now = new Date();
   const pad = n => String(n).padStart(2,'0');
-  return `chuong_sach_v7_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.txt`;
+  return `chuong_sach_v7_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 }
 
 function getDefaultPanelTxtFileName(){
@@ -880,19 +893,19 @@ function downloadTxt(){
   }
 
   const rawName = (els.txtFileName && els.txtFileName.value) ? els.txtFileName.value : '';
-  const cleanedBaseName = sanitizeFileName(rawName || getDefaultTxtFileName());
+  const baseName = sanitizeMainFileBaseName(rawName || getDefaultTxtFileName());
 
-  let fileName = cleanedBaseName;
+  let fileName = makeMainDownloadFileName(baseName);
   let autoInfo = null;
 
   if (els.autoIncrementName && els.autoIncrementName.checked){
-    autoInfo = getAutoIncrementFileName(cleanedBaseName);
+    autoInfo = getAutoIncrementFileName(fileName);
     fileName = autoInfo.fileName;
   }
 
   if (els.txtFileName){
-    // Hiển thị tên vừa tải (lần sau vẫn tăng tiếp nhờ bộ đếm localStorage)
-    els.txtFileName.value = fileName;
+    // Ô nhập chỉ giữ tên gốc, không hiện .txt
+    els.txtFileName.value = autoInfo ? `${autoInfo.baseStem}${autoInfo.count}` : baseName;
     try { saveSettingsToLocal(); } catch(e) {}
   }
 
@@ -1432,7 +1445,7 @@ if (els.btnResetNameCounter){
 
 updateStats();
 if (els.txtFileName && !String(els.txtFileName.value || '').trim()){
-  els.txtFileName.value = 'truyenchu.txt';
+  els.txtFileName.value = 'truyenchu';
   try { saveSettingsToLocal(); } catch(e) {}
 }
 if (els.multiTxtBatchSize && !String(els.multiTxtBatchSize.value || '').trim()){
