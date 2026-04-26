@@ -1143,15 +1143,22 @@ async function checkClipboardForAutoDownload(){
   }
 }
 
+function triggerAutoClipboardCheckFast(){
+  if (!__autoPasteDownloadOn) return;
+  checkClipboardForAutoDownload();
+  setTimeout(checkClipboardForAutoDownload, 120);
+  setTimeout(checkClipboardForAutoDownload, 350);
+}
+
 function startAutoPasteDownload(showMsg=true){
   __autoPasteDownloadOn = true;
   saveAutoPasteDownloadEnabled(true);
   updateAutoPasteDownloadButton();
-  if (showMsg) setStatus('✅ Đã bật tự dán & tải. Copy chương mới rồi quay lại web, tool sẽ tự xử lý nếu đọc được clipboard.', 'ok');
+  if (showMsg) setStatus('✅ Đã bật tự dán & tải. Copy chương mới rồi quay lại web, tool sẽ xử lý nhanh nhất nếu đọc được clipboard.', 'ok');
 
-  checkClipboardForAutoDownload();
+  triggerAutoClipboardCheckFast();
   if (__autoPasteDownloadTimer) clearInterval(__autoPasteDownloadTimer);
-  __autoPasteDownloadTimer = setInterval(checkClipboardForAutoDownload, 3000);
+  __autoPasteDownloadTimer = setInterval(checkClipboardForAutoDownload, 500);
 }
 
 function toggleAutoPasteDownload(){
@@ -1617,8 +1624,11 @@ if (els.btnOpenSettings) els.btnOpenSettings.addEventListener('click', openSetti
 if (els.btnCloseSettings) els.btnCloseSettings.addEventListener('click', closeSettingsModal);
 if (els.settingsBackdrop) els.settingsBackdrop.addEventListener('click', closeSettingsModal);
 if (els.btnAutoPasteDownload) els.btnAutoPasteDownload.addEventListener('click', toggleAutoPasteDownload);
-window.addEventListener('focus', () => { if (__autoPasteDownloadOn) checkClipboardForAutoDownload(); });
-document.addEventListener('visibilitychange', () => { if (!document.hidden && __autoPasteDownloadOn) checkClipboardForAutoDownload(); });
+window.addEventListener('focus', triggerAutoClipboardCheckFast);
+window.addEventListener('pageshow', triggerAutoClipboardCheckFast);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) triggerAutoClipboardCheckFast(); });
+document.addEventListener('pointerdown', triggerAutoClipboardCheckFast, {passive:true});
+document.addEventListener('touchstart', triggerAutoClipboardCheckFast, {passive:true});
 document.addEventListener('paste', (e) => {
   if (!__autoPasteDownloadOn) return;
   const txt = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
