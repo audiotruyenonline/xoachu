@@ -951,18 +951,18 @@ function downloadTxt(){
 
   if (!currentText){
     setStatus('⚠️ Chưa có kết quả để tải TXT.', 'warn');
-    return;
+    return false;
   }
 
   // Chỉ tải đúng nội dung hiện có, không lọc lại nữa
   const currentHash = simpleTextHash(currentText);
 
   if (lastDownloadedHash && lastDownloadedHash === currentHash){
-    const confirmDownload = confirm('⚠️ Nội dung TXT này giống file vừa tải trước đó.\nBạn vẫn muốn tải tiếp không?');
-    if (!confirmDownload){
-      setStatus('⛔ Đã hủy tải vì nội dung trùng với file vừa tải.', 'warn');
-      return;
-    }
+    els.input.value = '';
+    els.output.value = '';
+    updateStats();
+    try { placeTextareaCaretAtStart(els.input); } catch(e) {}
+    return false;
   }
 
   const rawName = (els.txtFileName && els.txtFileName.value) ? els.txtFileName.value : '';
@@ -1006,6 +1006,7 @@ function downloadTxt(){
   } else {
     setStatus(`✅ Đã tải file TXT: <b>${fileName}</b> • Đã tự xóa nội dung`, 'ok');
   }
+  return true;
 }
 async function pasteInput(){
   try{
@@ -1094,7 +1095,13 @@ async function handleAutoClipboardText(txt){
   if (!raw) return false;
 
   const hash = simpleTextHash(raw);
-  if (hash === __lastAutoClipboardHash) return false;
+  if (hash === __lastAutoClipboardHash){
+    els.input.value = '';
+    els.output.value = '';
+    updateStats();
+    await clearClipboardAfterAutoDownload();
+    return true;
+  }
   __lastAutoClipboardHash = hash;
 
   els.input.value = raw;
@@ -1110,8 +1117,13 @@ async function handleAutoClipboardText(txt){
   runOneClickClean();
 
   if (els.output.value && String(els.output.value).trim()){
-    downloadTxt();
+    const didDownload = downloadTxt();
     const clearedClipboard = await clearClipboardAfterAutoDownload();
+
+    if (!didDownload){
+      return true;
+    }
+
     if (clearedClipboard){
       setStatus('✅ Đã tự dán → làm sạch → tải TXT → xóa clipboard. Bạn có thể copy chương tiếp theo.', 'ok');
     }else{
