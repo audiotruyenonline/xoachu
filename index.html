@@ -165,6 +165,51 @@
     }
     .drawer-input::placeholder{color:var(--muted)}
 
+    .appbar-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+    .icon-btn{
+      width:42px;height:42px;border-radius:12px;border:1px solid var(--line);
+      background:#16213a;color:var(--text);cursor:pointer;
+      display:grid;place-items:center;font-size:20px;line-height:1;
+      flex:0 0 auto;
+    }
+    .icon-btn:hover{border-color:#3b6dc4;transform:translateY(-1px)}
+
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:95;
+    }
+    .modal-backdrop.show{opacity:1; pointer-events:auto}
+    .settings-modal{
+      position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.98);
+      width:min(94vw,980px); max-height:min(88vh,900px);
+      opacity:0; pointer-events:none; z-index:100;
+      display:flex; flex-direction:column;
+      background:linear-gradient(180deg,#0f1728,#0b1220);
+      border:1px solid var(--line); border-radius:18px;
+      box-shadow:0 24px 56px rgba(0,0,0,.45);
+      transition:opacity .2s ease, transform .2s ease;
+      overflow:hidden;
+    }
+    .settings-modal.show{opacity:1; pointer-events:auto; transform:translate(-50%,-50%) scale(1)}
+    .settings-head{
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      padding:12px 14px; border-bottom:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+    }
+    .settings-title{font-size:15px;font-weight:700}
+    .settings-body{overflow:auto;padding:12px;display:grid;gap:10px}
+    .settings-card{
+      border:1px solid var(--line); border-radius:14px; background:#10192c;
+      padding:12px;
+    }
+    .settings-card .detailsBody{padding:0;gap:10px}
+    .settings-card .row{padding:0}
+    @media (max-width:560px){
+      .settings-modal{width:min(96vw,980px); max-height:90vh; border-radius:16px}
+      .settings-head{padding:10px 12px}
+      .settings-body{padding:10px}
+    }
+
   </style>
 </head>
 <body>
@@ -234,6 +279,9 @@
       <div class="appbar-title">Menu nhanh TXT</div>
       <div class="appbar-sub">Bấm 3 gạch ngang để vào không gian riêng (mở nhiều TXT + copy 1 lần)</div>
     </div>
+    <div class="appbar-actions">
+      <button class="icon-btn" id="btnOpenSettings" type="button" aria-label="Mở cài đặt mốc">⚙</button>
+    </div>
   </div>
   <div class="header">
     <div>
@@ -269,60 +317,6 @@
       <span class="pill">Mẹo: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> = Lấy đoạn • 3 gạch ngang mở không gian TXT • mốc/tên file/bộ đếm tự lưu</span>
     </div>
 
-    <details>
-      <summary>⚙️ Tùy chỉnh mốc cắt & cụm từ xóa thêm</summary>
-      <div class="detailsBody">
-        <div class="two">
-          <div class="field">
-            <label>Mốc bắt đầu mặc định (fallback nếu danh sách ưu tiên không khớp)</label>
-            <input id="startMarker" value="@Bạn đang đọc bản lưu trong hệ thống">
-          </div>
-          <div class="field">
-            <label>Mốc kết thúc mặc định (fallback nếu danh sách ưu tiên không khớp)</label>
-            <input id="endMarker" value="Chương trước">
-          </div>
-        </div>
-
-        <div class="two">
-          <div class="field">
-            <label>Mốc bắt đầu theo thứ tự ưu tiên (mỗi dòng 1 mốc)</label>
-            <textarea id="startMarkersPriority" rows="6">@Bạn đang đọc bản lưu trong hệ thống
-@ Bạn đang đọc bản lưu trong hệ thống</textarea>
-            <div class="small">Tool sẽ xét từ trên xuống: gặp mốc nào trước trong danh sách thì dùng mốc đó.</div>
-          </div>
-
-          <div class="field">
-            <label>Mốc kết thúc theo thứ tự ưu tiên (mỗi dòng 1 mốc)</label>
-            <textarea id="endMarkersPriority" rows="6">Chương trước
-Mục lục
-Chương sau</textarea>
-            <div class="small">Ví dụ: có "Chương trước" thì dừng ở đó; không có mới xét "Mục lục"... </div>
-          </div>
-        </div>
-
-        <div class="field">
-          <div class="small">✅ Các ô mốc bắt đầu / mốc kết thúc / cụm từ xóa thêm / tên file TXT / bật-tắt tự tăng số sẽ tự lưu trên trình duyệt (localStorage). Tải lại trang vẫn còn.</div>
-          <label>Cụm từ xóa thêm (mỗi dòng 1 cụm, áp dụng trong “Làm sạch 1 chạm” và “Xóa watermark phổ biến”)</label>
-          <textarea id="extraRemovePhrases" rows="12">Chương trước
-Mục lục
-Chương sau
-UUKANSHU đọc sách www.uukanshu.com
-www.uukanshu.com
-UUKANSHU
-uukanshu
-——
-......
-69 sách a www.69shu.org
-đổi mới nhanh nhất Chương mới nhất!
-( Tấu chương xong )
-.!)"</textarea>
-        </div>
-              <div class="row" style="padding:0">
-          <button class="btn" type="button" id="btnSaveSettingsNow">Lưu cài đặt mốc ngay</button>
-          <button class="btn ghost" type="button" id="btnResetSavedSettings">Xóa cài đặt mốc đã lưu</button>
-        </div>
-      </div>
-    </details>
 
     <div class="grid">
       <div class="panel">
@@ -357,6 +351,72 @@ uukanshu
     </div>
   </div>
 </div>
+
+<div class="modal-backdrop" id="settingsBackdrop"></div>
+<section class="settings-modal" id="settingsModal" aria-hidden="true">
+  <div class="settings-head">
+    <div>
+      <div class="settings-title">⚙️ Cài đặt mốc cắt & cụm từ xóa</div>
+      <div class="drawer-note">Ấn nút cài đặt ở thanh trên để mở khung nổi chỉnh mốc.</div>
+    </div>
+    <button class="drawer-close" id="btnCloseSettings" type="button" aria-label="Đóng cài đặt">✕</button>
+  </div>
+  <div class="settings-body">
+    <div class="settings-card">
+      <div class="detailsBody">
+        <div class="two">
+          <div class="field">
+            <label>Mốc bắt đầu mặc định (fallback nếu danh sách ưu tiên không khớp)</label>
+            <input id="startMarker" value="@Bạn đang đọc bản lưu trong hệ thống">
+          </div>
+          <div class="field">
+            <label>Mốc kết thúc mặc định (fallback nếu danh sách ưu tiên không khớp)</label>
+            <input id="endMarker" value="Chương trước">
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label>Mốc bắt đầu theo thứ tự ưu tiên (mỗi dòng 1 mốc)</label>
+            <textarea id="startMarkersPriority" rows="6">@Bạn đang đọc bản lưu trong hệ thống
+@ Bạn đang đọc bản lưu trong hệ thống</textarea>
+            <div class="small">Tool sẽ xét từ trên xuống: gặp mốc nào trước trong danh sách thì dùng mốc đó.</div>
+          </div>
+
+          <div class="field">
+            <label>Mốc kết thúc theo thứ tự ưu tiên (mỗi dòng 1 mốc)</label>
+            <textarea id="endMarkersPriority" rows="6">Chương trước
+Mục lục
+Chương sau</textarea>
+            <div class="small">Ví dụ: có “Chương trước” thì dừng ở đó; không có mới xét “Mục lục”...</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="small">✅ Các ô mốc bắt đầu / mốc kết thúc / cụm từ xóa thêm / tên file TXT / bật-tắt tự tăng số sẽ tự lưu trên trình duyệt (localStorage). Tải lại trang vẫn còn.</div>
+          <label>Cụm từ xóa thêm (mỗi dòng 1 cụm, áp dụng trong “Làm sạch 1 chạm” và “Xóa watermark phổ biến”)</label>
+          <textarea id="extraRemovePhrases" rows="12">Chương trước
+Mục lục
+Chương sau
+UUKANSHU đọc sách www.uukanshu.com
+www.uukanshu.com
+UUKANSHU
+uukanshu
+——
+......
+69 sách a www.69shu.org
+đổi mới nhanh nhất Chương mới nhất!
+( Tấu chương xong )
+.!)"</textarea>
+        </div>
+        <div class="row" style="padding:0">
+          <button class="btn" type="button" id="btnSaveSettingsNow">Lưu cài đặt mốc ngay</button>
+          <button class="btn ghost" type="button" id="btnResetSavedSettings">Xóa cài đặt mốc đã lưu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <script>
 const els = {
@@ -398,6 +458,10 @@ Object.assign(els, {
   btnCloseDrawer: document.getElementById('btnCloseDrawer'),
   drawerPanel: document.getElementById('drawerPanel'),
   drawerBackdrop: document.getElementById('drawerBackdrop'),
+  btnOpenSettings: document.getElementById('btnOpenSettings'),
+  btnCloseSettings: document.getElementById('btnCloseSettings'),
+  settingsModal: document.getElementById('settingsModal'),
+  settingsBackdrop: document.getElementById('settingsBackdrop'),
   multiTxtFileInput: document.getElementById('multiTxtFileInput'),
   multiTxtFolderInput: document.getElementById('multiTxtFolderInput'),
   multiTxtBatchSize: document.getElementById('multiTxtBatchSize'),
@@ -972,6 +1036,19 @@ function closeDrawerPanel(){
   els.drawerPanel.setAttribute('aria-hidden', 'true');
 }
 
+function openSettingsModal(){
+  if (!els.settingsModal || !els.settingsBackdrop) return;
+  els.settingsModal.classList.add('show');
+  els.settingsBackdrop.classList.add('show');
+  els.settingsModal.setAttribute('aria-hidden', 'false');
+}
+function closeSettingsModal(){
+  if (!els.settingsModal || !els.settingsBackdrop) return;
+  els.settingsModal.classList.remove('show');
+  els.settingsBackdrop.classList.remove('show');
+  els.settingsModal.setAttribute('aria-hidden', 'true');
+}
+
 function loadMultiBatchState(){
   try{
     const raw = localStorage.getItem(MULTI_BATCH_STATE_KEY);
@@ -1397,6 +1474,9 @@ els.dropZone.addEventListener('drop', e => {
 if (els.btnOpenDrawer) els.btnOpenDrawer.addEventListener('click', openDrawerPanel);
 if (els.btnCloseDrawer) els.btnCloseDrawer.addEventListener('click', closeDrawerPanel);
 if (els.drawerBackdrop) els.drawerBackdrop.addEventListener('click', closeDrawerPanel);
+if (els.btnOpenSettings) els.btnOpenSettings.addEventListener('click', openSettingsModal);
+if (els.btnCloseSettings) els.btnCloseSettings.addEventListener('click', closeSettingsModal);
+if (els.settingsBackdrop) els.settingsBackdrop.addEventListener('click', closeSettingsModal);
 
 if (els.multiTxtFileInput){
   els.multiTxtFileInput.addEventListener('change', async (e) => {
@@ -1417,7 +1497,10 @@ if (document.getElementById('btnResetMultiFileName')) document.getElementById('b
 if (els.multiTxtTextarea) els.multiTxtTextarea.addEventListener('input', updateMultiTxtMeta);
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape'){ closeDrawerPanel(); }
+  if (e.key === 'Escape'){
+    closeDrawerPanel();
+    closeSettingsModal();
+  }
   if (e.ctrlKey && e.key === 'Enter'){ e.preventDefault(); runExtract(); }
   if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l'){ e.preventDefault(); runOneClickClean(); }
 });
