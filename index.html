@@ -692,7 +692,7 @@ function removeCommonNoise(text){
   t = removeExtraPhrases(t);
   return t.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
 }
-const MIN_CHAPTER_LENGTH = 4000;
+const MIN_CHAPTER_LENGTH = 3000;
 
 const NON_CHAPTER_KEYWORDS = [
   'lên khung cảm nghĩ'
