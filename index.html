@@ -1033,6 +1033,7 @@ let __autoPasteDownloadOn = false;
 let __autoPasteDownloadTimer = null;
 let __autoPasteDownloadBusy = false;
 let __lastAutoClipboardHash = '';
+let __lastAutoClipboardWarnAt = 0;
 
 function updateAutoPasteDownloadButton(){
   if (!els.btnAutoPasteDownload) return;
@@ -1082,7 +1083,6 @@ async function checkClipboardForAutoDownload(){
   if (!__autoPasteDownloadOn || __autoPasteDownloadBusy || document.hidden) return;
   if (!navigator.clipboard || !navigator.clipboard.readText){
     stopAutoPasteDownload(false);
-    setStatus('⚠️ Trình duyệt này không cho web tự đọc clipboard. Hãy dùng nút “Dán từ clipboard”.', 'warn');
     return;
   }
 
@@ -1091,8 +1091,9 @@ async function checkClipboardForAutoDownload(){
     const txt = await navigator.clipboard.readText();
     handleAutoClipboardText(txt);
   }catch(err){
-    // Một số trình duyệt Android/content:// chỉ cho đọc clipboard sau khi người dùng bấm trực tiếp.
-    setStatus('⚠️ Trình duyệt đang chặn tự đọc clipboard. Hãy quay lại web rồi bấm nút này hoặc dùng “Dán từ clipboard”.', 'warn');
+    // Không hiện toast liên tục khi trình duyệt tạm chặn đọc clipboard.
+    // Tool vẫn tiếp tục chạy; khi người dùng quay lại web/bấm nút/dán thủ công thì sẽ xử lý tiếp.
+    __lastAutoClipboardWarnAt = Date.now();
   }finally{
     __autoPasteDownloadBusy = false;
   }
@@ -1101,11 +1102,11 @@ async function checkClipboardForAutoDownload(){
 function startAutoPasteDownload(){
   __autoPasteDownloadOn = true;
   updateAutoPasteDownloadButton();
-  setStatus('✅ Đã bật tự dán & tải. Copy chương mới rồi quay lại web, tool sẽ tự thử dán và tải.', 'ok');
+  setStatus('✅ Đã bật tự dán & tải. Copy chương mới rồi quay lại web, tool sẽ tự xử lý nếu đọc được clipboard.', 'ok');
 
   checkClipboardForAutoDownload();
   if (__autoPasteDownloadTimer) clearInterval(__autoPasteDownloadTimer);
-  __autoPasteDownloadTimer = setInterval(checkClipboardForAutoDownload, 1600);
+  __autoPasteDownloadTimer = setInterval(checkClipboardForAutoDownload, 3000);
 }
 
 function toggleAutoPasteDownload(){
