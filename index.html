@@ -165,6 +165,7 @@
     }
     .drawer-input::placeholder{color:var(--muted)}
 
+
     .appbar-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto}
     .icon-btn{
       width:42px;height:42px;border-radius:12px;border:1px solid var(--line);
@@ -173,6 +174,11 @@
       flex:0 0 auto;
     }
     .icon-btn:hover{border-color:#3b6dc4;transform:translateY(-1px)}
+    .btn.auto-on{
+      background:linear-gradient(180deg,#7a2fe8,#5423ba);
+      border-color:#8b5cf6;
+      box-shadow:0 0 0 3px rgba(139,92,246,.16);
+    }
 
     .modal-backdrop{
       position:fixed; inset:0; background:rgba(0,0,0,.45);
@@ -302,6 +308,7 @@
 
       <button class="btn primary" id="btnExtract">Lấy đoạn truyện</button>
       <button class="btn success" id="btnOneClick">Làm sạch 1 chạm</button>
+      <button class="btn" id="btnAutoPasteDownload" type="button">Bật tự dán & tải</button>
       <button class="btn" id="btnCopy">Copy kết quả</button>
       <button class="btn warn" id="btnDownloadTxt">Tải TXT</button>
       <input id="txtFileName" class="mini-input" type="text" placeholder="Tên file TXT (tự nhớ)">
@@ -352,6 +359,7 @@
   </div>
 </div>
 
+
 <div class="modal-backdrop" id="settingsBackdrop"></div>
 <section class="settings-modal" id="settingsModal" aria-hidden="true">
   <div class="settings-head">
@@ -388,7 +396,7 @@
             <textarea id="endMarkersPriority" rows="6">Chương trước
 Mục lục
 Chương sau</textarea>
-            <div class="small">Ví dụ: có “Chương trước” thì dừng ở đó; không có mới xét “Mục lục”...</div>
+            <div class="small">Ví dụ: có "Chương trước" thì dừng ở đó; không có mới xét "Mục lục"... </div>
           </div>
         </div>
 
@@ -409,7 +417,7 @@ uukanshu
 ( Tấu chương xong )
 .!)"</textarea>
         </div>
-        <div class="row" style="padding:0">
+              <div class="row" style="padding:0">
           <button class="btn" type="button" id="btnSaveSettingsNow">Lưu cài đặt mốc ngay</button>
           <button class="btn ghost" type="button" id="btnResetSavedSettings">Xóa cài đặt mốc đã lưu</button>
         </div>
@@ -446,6 +454,7 @@ const els = {
   btnRemoveWatermark: document.getElementById('btnRemoveWatermark'),
   btnSaveSettingsNow: document.getElementById('btnSaveSettingsNow'),
   btnResetSavedSettings: document.getElementById('btnResetSavedSettings'),
+  btnAutoPasteDownload: document.getElementById('btnAutoPasteDownload'),
   txtFileName: document.getElementById('txtFileName'),
   autoIncrementName: document.getElementById('autoIncrementName'),
   btnResetNameCounter: document.getElementById('btnResetNameCounter')
@@ -1020,6 +1029,90 @@ async function pasteInput(){
   }catch{ setStatus('⚠️ Trình duyệt chặn đọc clipboard. Hãy dán thủ công.', 'warn'); }
 }
 
+let __autoPasteDownloadOn = false;
+let __autoPasteDownloadTimer = null;
+let __autoPasteDownloadBusy = false;
+let __lastAutoClipboardHash = '';
+
+function updateAutoPasteDownloadButton(){
+  if (!els.btnAutoPasteDownload) return;
+  els.btnAutoPasteDownload.textContent = __autoPasteDownloadOn ? 'Tắt tự dán & tải' : 'Bật tự dán & tải';
+  els.btnAutoPasteDownload.classList.toggle('auto-on', __autoPasteDownloadOn);
+}
+
+function stopAutoPasteDownload(showMsg=true){
+  __autoPasteDownloadOn = false;
+  if (__autoPasteDownloadTimer){
+    clearInterval(__autoPasteDownloadTimer);
+    __autoPasteDownloadTimer = null;
+  }
+  updateAutoPasteDownloadButton();
+  if (showMsg) setStatus('⛔ Đã tắt tự dán & tải.', 'warn');
+}
+
+function handleAutoClipboardText(txt){
+  const raw = String(txt || '').trim();
+  if (!raw) return false;
+
+  const hash = simpleTextHash(raw);
+  if (hash === __lastAutoClipboardHash) return false;
+  __lastAutoClipboardHash = hash;
+
+  els.input.value = raw;
+  showInputFromTop();
+  updateStats();
+
+  if (hasAlwaysRejectSignalInRawText(els.input.value)){
+    clearAllOnReject('⚠️ Tự dán: phát hiện “lên khung cảm nghĩ” → đã xóa để chờ chương mới.');
+    return true;
+  }
+
+  runOneClickClean();
+
+  if (els.output.value && String(els.output.value).trim()){
+    downloadTxt();
+    setStatus('✅ Đã tự dán → làm sạch → tải TXT. Bạn có thể copy chương tiếp theo.', 'ok');
+  }else{
+    setStatus('⚠️ Đã tự dán nhưng chưa có kết quả hợp lệ để tải.', 'warn');
+  }
+  return true;
+}
+
+async function checkClipboardForAutoDownload(){
+  if (!__autoPasteDownloadOn || __autoPasteDownloadBusy || document.hidden) return;
+  if (!navigator.clipboard || !navigator.clipboard.readText){
+    stopAutoPasteDownload(false);
+    setStatus('⚠️ Trình duyệt này không cho web tự đọc clipboard. Hãy dùng nút “Dán từ clipboard”.', 'warn');
+    return;
+  }
+
+  __autoPasteDownloadBusy = true;
+  try{
+    const txt = await navigator.clipboard.readText();
+    handleAutoClipboardText(txt);
+  }catch(err){
+    // Một số trình duyệt Android/content:// chỉ cho đọc clipboard sau khi người dùng bấm trực tiếp.
+    setStatus('⚠️ Trình duyệt đang chặn tự đọc clipboard. Hãy quay lại web rồi bấm nút này hoặc dùng “Dán từ clipboard”.', 'warn');
+  }finally{
+    __autoPasteDownloadBusy = false;
+  }
+}
+
+function startAutoPasteDownload(){
+  __autoPasteDownloadOn = true;
+  updateAutoPasteDownloadButton();
+  setStatus('✅ Đã bật tự dán & tải. Copy chương mới rồi quay lại web, tool sẽ tự thử dán và tải.', 'ok');
+
+  checkClipboardForAutoDownload();
+  if (__autoPasteDownloadTimer) clearInterval(__autoPasteDownloadTimer);
+  __autoPasteDownloadTimer = setInterval(checkClipboardForAutoDownload, 1600);
+}
+
+function toggleAutoPasteDownload(){
+  if (__autoPasteDownloadOn) stopAutoPasteDownload();
+  else startAutoPasteDownload();
+}
+
 // ===== Panel 3 gạch: mở nhiều TXT + ô văn bản TXT =====
 let __multiTxtPickedFiles = [];
 
@@ -1477,6 +1570,17 @@ if (els.drawerBackdrop) els.drawerBackdrop.addEventListener('click', closeDrawer
 if (els.btnOpenSettings) els.btnOpenSettings.addEventListener('click', openSettingsModal);
 if (els.btnCloseSettings) els.btnCloseSettings.addEventListener('click', closeSettingsModal);
 if (els.settingsBackdrop) els.settingsBackdrop.addEventListener('click', closeSettingsModal);
+if (els.btnAutoPasteDownload) els.btnAutoPasteDownload.addEventListener('click', toggleAutoPasteDownload);
+window.addEventListener('focus', () => { if (__autoPasteDownloadOn) checkClipboardForAutoDownload(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && __autoPasteDownloadOn) checkClipboardForAutoDownload(); });
+document.addEventListener('paste', (e) => {
+  if (!__autoPasteDownloadOn) return;
+  const txt = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
+  if (txt){
+    e.preventDefault();
+    handleAutoClipboardText(txt);
+  }
+});
 
 if (els.multiTxtFileInput){
   els.multiTxtFileInput.addEventListener('change', async (e) => {
