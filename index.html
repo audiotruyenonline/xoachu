@@ -308,7 +308,7 @@
 
       <button class="btn primary" id="btnExtract">Lấy đoạn truyện</button>
       <button class="btn success" id="btnOneClick">Làm sạch 1 chạm</button>
-      <button class="btn" id="btnAutoPasteDownload" type="button">Bật tự dán & tải</button>
+      <button class="btn auto-on" id="btnAutoPasteDownload" type="button">Tắt tự dán & tải</button>
       <button class="btn" id="btnCopy">Copy kết quả</button>
       <button class="btn warn" id="btnDownloadTxt">Tải TXT</button>
       <input id="txtFileName" class="mini-input" type="text" placeholder="Tên file TXT (tự nhớ)">
@@ -765,7 +765,7 @@ function removeCommonNoise(text){
   t = removeExtraPhrases(t);
   return t.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
 }
-const MIN_CHAPTER_LENGTH = 3000;
+const MIN_CHAPTER_LENGTH = 4000;
 
 const NON_CHAPTER_KEYWORDS = [
   'lên khung cảm nghĩ'
@@ -1029,11 +1029,48 @@ async function pasteInput(){
   }catch{ setStatus('⚠️ Trình duyệt chặn đọc clipboard. Hãy dán thủ công.', 'warn'); }
 }
 
+const AUTO_PASTE_DOWNLOAD_ENABLED_KEY = 'tool_auto_paste_download_enabled_v1';
 let __autoPasteDownloadOn = false;
 let __autoPasteDownloadTimer = null;
 let __autoPasteDownloadBusy = false;
 let __lastAutoClipboardHash = '';
 let __lastAutoClipboardWarnAt = 0;
+
+function loadAutoPasteDownloadEnabled(){
+  try{
+    const saved = localStorage.getItem(AUTO_PASTE_DOWNLOAD_ENABLED_KEY);
+    // Mặc định luôn bật. Chỉ khi người dùng bấm Tắt thì mới lưu false.
+    return saved === null ? true : saved === 'true';
+  }catch(err){
+    return true;
+  }
+}
+function saveAutoPasteDownloadEnabled(enabled){
+  try{
+    localStorage.setItem(AUTO_PASTE_DOWNLOAD_ENABLED_KEY, enabled ? 'true' : 'false');
+  }catch(err){}
+}
+
+async function clearClipboardAfterAutoDownload(){
+  // Sau khi tự dán + tải xong, thử xóa nội dung vừa copy khỏi clipboard.
+  // Nếu trình duyệt chặn quyền ghi clipboard thì bỏ qua, không hiện thông báo lỗi.
+  try{
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText('');
+      return true;
+    }
+  }catch(err){}
+
+  // Một số trình duyệt không cho ghi chuỗi rỗng, thử ghi 1 khoảng trắng để tránh dán lại chương cũ.
+  try{
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(' ');
+      return true;
+    }
+  }catch(err){}
+
+  return false;
+}
 
 function updateAutoPasteDownloadButton(){
   if (!els.btnAutoPasteDownload) return;
@@ -1043,15 +1080,16 @@ function updateAutoPasteDownloadButton(){
 
 function stopAutoPasteDownload(showMsg=true){
   __autoPasteDownloadOn = false;
+  saveAutoPasteDownloadEnabled(false);
   if (__autoPasteDownloadTimer){
     clearInterval(__autoPasteDownloadTimer);
     __autoPasteDownloadTimer = null;
   }
   updateAutoPasteDownloadButton();
-  if (showMsg) setStatus('⛔ Đã tắt tự dán & tải.', 'warn');
+  if (showMsg) setStatus('⛔ Đã tắt tự dán & tải. Bấm lại để bật.', 'warn');
 }
 
-function handleAutoClipboardText(txt){
+async function handleAutoClipboardText(txt){
   const raw = String(txt || '').trim();
   if (!raw) return false;
 
@@ -1065,6 +1103,7 @@ function handleAutoClipboardText(txt){
 
   if (hasAlwaysRejectSignalInRawText(els.input.value)){
     clearAllOnReject('⚠️ Tự dán: phát hiện “lên khung cảm nghĩ” → đã xóa để chờ chương mới.');
+    await clearClipboardAfterAutoDownload();
     return true;
   }
 
@@ -1072,7 +1111,12 @@ function handleAutoClipboardText(txt){
 
   if (els.output.value && String(els.output.value).trim()){
     downloadTxt();
-    setStatus('✅ Đã tự dán → làm sạch → tải TXT. Bạn có thể copy chương tiếp theo.', 'ok');
+    const clearedClipboard = await clearClipboardAfterAutoDownload();
+    if (clearedClipboard){
+      setStatus('✅ Đã tự dán → làm sạch → tải TXT → xóa clipboard. Bạn có thể copy chương tiếp theo.', 'ok');
+    }else{
+      setStatus('✅ Đã tự dán → làm sạch → tải TXT. Trình duyệt không cho xóa clipboard, nhưng tool sẽ không xử lý trùng chương này.', 'ok');
+    }
   }else{
     setStatus('⚠️ Đã tự dán nhưng chưa có kết quả hợp lệ để tải.', 'warn');
   }
@@ -1089,7 +1133,7 @@ async function checkClipboardForAutoDownload(){
   __autoPasteDownloadBusy = true;
   try{
     const txt = await navigator.clipboard.readText();
-    handleAutoClipboardText(txt);
+    await handleAutoClipboardText(txt);
   }catch(err){
     // Không hiện toast liên tục khi trình duyệt tạm chặn đọc clipboard.
     // Tool vẫn tiếp tục chạy; khi người dùng quay lại web/bấm nút/dán thủ công thì sẽ xử lý tiếp.
@@ -1099,10 +1143,11 @@ async function checkClipboardForAutoDownload(){
   }
 }
 
-function startAutoPasteDownload(){
+function startAutoPasteDownload(showMsg=true){
   __autoPasteDownloadOn = true;
+  saveAutoPasteDownloadEnabled(true);
   updateAutoPasteDownloadButton();
-  setStatus('✅ Đã bật tự dán & tải. Copy chương mới rồi quay lại web, tool sẽ tự xử lý nếu đọc được clipboard.', 'ok');
+  if (showMsg) setStatus('✅ Đã bật tự dán & tải. Copy chương mới rồi quay lại web, tool sẽ tự xử lý nếu đọc được clipboard.', 'ok');
 
   checkClipboardForAutoDownload();
   if (__autoPasteDownloadTimer) clearInterval(__autoPasteDownloadTimer);
@@ -1582,6 +1627,14 @@ document.addEventListener('paste', (e) => {
     handleAutoClipboardText(txt);
   }
 });
+
+// Mặc định luôn bật tự dán & tải khi mở web.
+// Nếu người dùng bấm Tắt, trạng thái tắt sẽ được nhớ lại.
+if (loadAutoPasteDownloadEnabled()){
+  startAutoPasteDownload(false);
+}else{
+  updateAutoPasteDownloadButton();
+}
 
 if (els.multiTxtFileInput){
   els.multiTxtFileInput.addEventListener('change', async (e) => {
