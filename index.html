@@ -306,6 +306,7 @@
 <input id="storyId" class="mini-input" type="number" placeholder="ID truyện (vd: 1,2,3...)" value="1">
 <button class="btn ghost" id="btnResetStoryCounter" type="button">Reset truyện này</button>
 <button class="btn ghost" id="btnResetRemember" type="button">Reset ghi nhớ</button>
+<button class="btn auto-on" id="btnToggleDuplicateMemory" type="button">Ghi nhớ trùng: BẬT</button>
 
       <button class="btn primary" id="btnExtract">Lấy đoạn truyện</button>
       <button class="btn success" id="btnOneClick">Làm sạch 1 chạm</button>
@@ -458,7 +459,8 @@ const els = {
   btnAutoPasteDownload: document.getElementById('btnAutoPasteDownload'),
   txtFileName: document.getElementById('txtFileName'),
   autoIncrementName: document.getElementById('autoIncrementName'),
-  btnResetNameCounter: document.getElementById('btnResetNameCounter')
+  btnResetNameCounter: document.getElementById('btnResetNameCounter'),
+  btnToggleDuplicateMemory: document.getElementById('btnToggleDuplicateMemory')
 
 };
 
@@ -766,7 +768,7 @@ function removeCommonNoise(text){
   t = removeExtraPhrases(t);
   return t.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
 }
-const MIN_CHAPTER_LENGTH = 4000;
+const MIN_CHAPTER_LENGTH = 2000;
 
 const NON_CHAPTER_KEYWORDS = [
   'lên khung cảm nghĩ'
@@ -799,8 +801,30 @@ function hasAlwaysRejectSignal(text){
   return ALWAYS_REJECT_PATTERNS.some(re => re.test(t)) || t.includes('lên khung cảm nghĩ');
 }
 
+function getFirstChapterHeaderArea(rawText){
+  const text = normalizeNewlines(rawText);
+  const firstPart = text.slice(0, Math.min(text.length, 3500));
+  const cutIndexes = [];
+
+  // Chỉ kiểm tra vùng tiêu đề đầu trang: phần nằm trước hàng Chương trước / Mục lục / Chương sau
+  // hoặc trước mốc @Bạn đang đọc. Nhờ vậy nếu trong clipboard có nhiều trang liền nhau,
+  // chương thật ở đầu sẽ không bị loại chỉ vì phía sau có trang "Lên khung cảm nghĩ".
+  const navMatch = /Chương\s*trước\s*Mục\s*lục\s*Chương\s*sau/i.exec(firstPart);
+  if (navMatch) cutIndexes.push(navMatch.index);
+
+  const readerMatch = /@\s*Bạn đang đọc bản lưu trong hệ thống/i.exec(firstPart);
+  if (readerMatch) cutIndexes.push(readerMatch.index);
+
+  const cutAt = cutIndexes.length ? Math.min(...cutIndexes) : firstPart.length;
+  return firstPart.slice(0, cutAt);
+}
+
+function hasNonChapterTitleNearTop(rawText){
+  return hasAlwaysRejectSignal(getFirstChapterHeaderArea(rawText));
+}
+
 function hasAlwaysRejectSignalInRawText(rawText){
-  return hasAlwaysRejectSignal(rawText);
+  return hasNonChapterTitleNearTop(rawText);
 }
 
 function isLikelyNonChapter(text){
@@ -836,7 +860,7 @@ function applyChapterLengthFilter(text){
 
 function runExtract(){
   if (hasAlwaysRejectSignalInRawText(els.input.value)){
-    clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+    clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” ở vùng tên chương đầu trang → đã xóa hết để dán chương mới.');
     return;
   }
 
@@ -854,7 +878,7 @@ function runExtract(){
 }
 function runOneClickClean(){
   if (hasAlwaysRejectSignalInRawText(els.input.value)){
-    clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+    clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” ở vùng tên chương đầu trang → đã xóa hết để dán chương mới.');
     return;
   }
 
@@ -924,6 +948,55 @@ const LAST_DOWNLOADED_HASH_KEY = 'tool_cat_doan_truyen_last_downloaded_hash_v1';
 const DOWNLOADED_HASH_MAP_KEY = 'tool_cat_doan_truyen_downloaded_hashes_by_story_v2';
 const MAX_DOWNLOADED_HASHES_PER_STORY = 30000;
 const MULTI_BATCH_STATE_KEY = 'tool_multi_txt_batch_state_v1';
+const DUPLICATE_MEMORY_ENABLED_KEY = 'tool_duplicate_memory_enabled_v1';
+
+function loadDuplicateMemoryEnabled(){
+  try{
+    const saved = localStorage.getItem(DUPLICATE_MEMORY_ENABLED_KEY);
+    // Mặc định BẬT để chống tải trùng chương. Người dùng có thể tắt khi muốn tải lại.
+    return saved === null ? true : saved === 'true';
+  }catch(e){
+    return true;
+  }
+}
+
+function saveDuplicateMemoryEnabled(enabled){
+  try{
+    localStorage.setItem(DUPLICATE_MEMORY_ENABLED_KEY, enabled ? 'true' : 'false');
+  }catch(e){}
+}
+
+let __duplicateMemoryEnabled = loadDuplicateMemoryEnabled();
+
+function isDuplicateMemoryEnabled(){
+  return __duplicateMemoryEnabled !== false;
+}
+
+function updateDuplicateMemoryButton(){
+  const btn = els.btnToggleDuplicateMemory || document.getElementById('btnToggleDuplicateMemory');
+  if (!btn) return;
+  if (isDuplicateMemoryEnabled()){
+    btn.textContent = 'Ghi nhớ trùng: BẬT';
+    btn.classList.add('auto-on');
+    btn.title = 'Đang bật: chương đã tải sẽ được ghi nhớ và không tải trùng.';
+  }else{
+    btn.textContent = 'Ghi nhớ trùng: TẮT';
+    btn.classList.remove('auto-on');
+    btn.title = 'Đang tắt: cho phép tải lại chương cũ, không ghi nhớ chống trùng.';
+  }
+}
+
+function toggleDuplicateMemory(){
+  __duplicateMemoryEnabled = !isDuplicateMemoryEnabled();
+  saveDuplicateMemoryEnabled(__duplicateMemoryEnabled);
+  updateDuplicateMemoryButton();
+  if (isDuplicateMemoryEnabled()){
+    setStatus('✅ Đã BẬT ghi nhớ trùng lặp. Chương đã tải sẽ bị chặn nếu copy lại.', 'ok');
+  }else{
+    try{ __lastAutoClipboardHash = ''; }catch(e){}
+    setStatus('⚠️ Đã TẮT ghi nhớ trùng lặp. Tool sẽ cho tải lại chương cũ và không lưu chống trùng.', 'warn');
+  }
+}
 
 function simpleTextHash(str){
   const s = String(str || '');
@@ -1063,7 +1136,7 @@ function downloadTxt(){
   // Hash dùng bản đã chuẩn hóa nhẹ để cùng 1 chương không lọt qua do khác xuống dòng/khoảng trắng.
   const currentHash = simpleTextHash(normalizeChapterTextForDuplicateCheck(currentText));
 
-  if (hasDownloadedChapterHash(currentHash)){
+  if (isDuplicateMemoryEnabled() && hasDownloadedChapterHash(currentHash)){
     const storyId = getDuplicateStoryId();
     const rememberedCount = getDownloadedChapterHashCount(storyId);
     clearMainBoxesForNextChapter();
@@ -1098,16 +1171,19 @@ function downloadTxt(){
   a.remove();
   URL.revokeObjectURL(url);
 
-  // Ghi nhớ nội dung vừa tải vào danh sách chống trùng của truyện hiện tại.
-  rememberDownloadedChapterHash(currentHash);
+  // Ghi nhớ nội dung vừa tải vào danh sách chống trùng của truyện hiện tại nếu đang bật.
+  if (isDuplicateMemoryEnabled()){
+    rememberDownloadedChapterHash(currentHash);
+  }
 
   // Tự xóa nội dung sau khi tải xong (giữ lại cài đặt mốc / tên file / bộ đếm)
   clearMainBoxesForNextChapter();
 
+  const duplicateNote = isDuplicateMemoryEnabled() ? '' : ' • Ghi nhớ trùng: <b>TẮT</b>';
   if (autoInfo){
-    setStatus(`✅ Đã tải file TXT: <b>${fileName}</b> • Tự tăng số: <b>${autoInfo.count}</b> • Đã tự xóa nội dung`, 'ok');
+    setStatus(`✅ Đã tải file TXT: <b>${fileName}</b> • Tự tăng số: <b>${autoInfo.count}</b> • Đã tự xóa nội dung${duplicateNote}`, 'ok');
   } else {
-    setStatus(`✅ Đã tải file TXT: <b>${fileName}</b> • Đã tự xóa nội dung`, 'ok');
+    setStatus(`✅ Đã tải file TXT: <b>${fileName}</b> • Đã tự xóa nội dung${duplicateNote}`, 'ok');
   }
   return true;
 }
@@ -1120,7 +1196,7 @@ async function pasteInput(){
     updateStats();
 
     if (hasAlwaysRejectSignalInRawText(els.input.value)){
-      clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+      clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” ở vùng tên chương đầu trang → đã xóa hết để dán chương mới.');
       return;
     }
 
@@ -1202,7 +1278,8 @@ async function handleAutoClipboardText(txt){
     els.input.value = '';
     els.output.value = '';
     updateStats();
-    await clearClipboardAfterAutoDownload();
+    const cleared = await clearClipboardAfterAutoDownload();
+    if (cleared) __lastAutoClipboardHash = '';
     return true;
   }
   __lastAutoClipboardHash = hash;
@@ -1212,7 +1289,7 @@ async function handleAutoClipboardText(txt){
   updateStats();
 
   if (hasAlwaysRejectSignalInRawText(els.input.value)){
-    clearAllOnReject('⚠️ Tự dán: phát hiện “lên khung cảm nghĩ” → đã xóa để chờ chương mới.');
+    clearAllOnReject('⚠️ Tự dán: phát hiện “lên khung cảm nghĩ” ở vùng tên chương đầu trang → đã xóa để chờ chương mới.');
     await clearClipboardAfterAutoDownload();
     return true;
   }
@@ -1222,6 +1299,7 @@ async function handleAutoClipboardText(txt){
   if (els.output.value && String(els.output.value).trim()){
     const didDownload = downloadTxt();
     const clearedClipboard = await clearClipboardAfterAutoDownload();
+    if (clearedClipboard) __lastAutoClipboardHash = '';
 
     if (!didDownload){
       return true;
@@ -1230,7 +1308,7 @@ async function handleAutoClipboardText(txt){
     if (clearedClipboard){
       setStatus('✅ Đã tự dán → làm sạch → tải TXT → xóa clipboard. Bạn có thể copy chương tiếp theo.', 'ok');
     }else{
-      setStatus('✅ Đã tự dán → làm sạch → tải TXT. Trình duyệt không cho xóa clipboard, nhưng tool sẽ không xử lý trùng chương này.', 'ok');
+      setStatus('✅ Đã tự dán → làm sạch → tải TXT. Trình duyệt không cho xóa clipboard, tool sẽ giữ khóa tạm để tránh tải lặp liên tục.', 'ok');
     }
   }else{
     setStatus('⚠️ Đã tự dán nhưng chưa có kết quả hợp lệ để tải.', 'warn');
@@ -1898,6 +1976,8 @@ function resetRememberedChapters(){
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('btnResetStoryCounter')?.addEventListener('click', resetStoryCounter);
   document.getElementById('btnResetRemember')?.addEventListener('click', resetRememberedChapters);
+  document.getElementById('btnToggleDuplicateMemory')?.addEventListener('click', toggleDuplicateMemory);
+  updateDuplicateMemoryButton();
 });
 
 // ===== override download to use the normal filename rule =====
@@ -1911,7 +1991,7 @@ els.input.addEventListener('input', () => {
   clearTimeout(autoCleanTimeout);
   autoCleanTimeout = setTimeout(() => {
     if (hasAlwaysRejectSignalInRawText(els.input.value)){
-      clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” trong văn bản gốc → đã xóa hết để dán chương mới.');
+      clearAllOnReject('⚠️ Phát hiện “lên khung cảm nghĩ” ở vùng tên chương đầu trang → đã xóa hết để dán chương mới.');
       return;
     }
     runOneClickClean();
