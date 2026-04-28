@@ -657,31 +657,42 @@ function updateStats(){
   els.statInput.textContent = `Input: ${els.input.value.length.toLocaleString('vi-VN')} ký tự`;
   els.statOutput.textContent = `Output: ${els.output.value.length.toLocaleString('vi-VN')} ký tự`;
 }
-function showInputFromTop(){
+function isEditableElement(el){
+  if (!el) return false;
+  const tag = String(el.tagName || '').toLowerCase();
+  if (tag === 'textarea') return true;
+  if (tag === 'input'){
+    const type = String(el.type || 'text').toLowerCase();
+    return !['button','checkbox','radio','file','submit','reset','range','color','hidden'].includes(type);
+  }
+  return !!(el.isContentEditable || (el.closest && el.closest('[contenteditable="true"]')));
+}
+
+function blurEditableElement(){
   try{
-    try { els.input.focus({ preventScroll: true }); } catch (e) { try { els.input.focus(); } catch (_) {} }
+    const a = document.activeElement;
+    if (isEditableElement(a)) a.blur();
+  }catch(e){}
+}
+
+function showInputFromTop(focusInput=false){
+  // Mặc định KHÔNG focus ô nhập để tránh bật bàn phím điện thoại khi auto dán/tải.
+  try{
+    if (focusInput){
+      try { els.input.focus({ preventScroll: true }); } catch (e) { try { els.input.focus(); } catch (_) {} }
+    }
     els.input.scrollTop = 0;
-    els.input.selectionStart = 0;
-    els.input.selectionEnd = 0;
-    els.input.setSelectionRange(0, 0);
+    if (focusInput) els.input.setSelectionRange(0, 0);
   }catch(e){}
   try{
     requestAnimationFrame(() => {
-      try{
-        els.input.scrollTop = 0;
-        els.input.selectionStart = 0;
-        els.input.selectionEnd = 0;
-        els.input.setSelectionRange(0, 0);
-      }catch(e){}
+      try{ els.input.scrollTop = 0; }catch(e){}
+      try{ if (focusInput) els.input.setSelectionRange(0, 0); }catch(e){}
     });
   }catch(e){}
   setTimeout(() => {
-    try{
-      els.input.scrollTop = 0;
-      els.input.selectionStart = 0;
-      els.input.selectionEnd = 0;
-      els.input.setSelectionRange(0, 0);
-    }catch(e){}
+    try{ els.input.scrollTop = 0; }catch(e){}
+    try{ if (focusInput) els.input.setSelectionRange(0, 0); }catch(e){}
   }, 0);
 }
 function escapeRegExp(str){ return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
@@ -904,20 +915,21 @@ async function copyOutput(){
     }catch{ setStatus('⚠️ Không copy được. Hãy copy thủ công.', 'warn'); }
   }
 }
-function placeTextareaCaretAtStart(el){
+function placeTextareaCaretAtStart(el, focusEl=false){
   if (!el) return;
-  try { el.focus({ preventScroll: true }); } catch (e) { try { el.focus(); } catch (_) {} }
+  // Không tự focus để tránh bàn phím bật khi người dùng chỉ chạm ngoài ô nhập.
+  try { if (focusEl) el.focus({ preventScroll: true }); } catch (e) { try { if (focusEl) el.focus(); } catch (_) {} }
   try { el.scrollTop = 0; } catch (e) {}
-  try { el.setSelectionRange(0, 0); } catch (e) {}
+  try { if (focusEl) el.setSelectionRange(0, 0); } catch (e) {}
   try {
     requestAnimationFrame(() => {
       try { el.scrollTop = 0; } catch (e) {}
-      try { el.setSelectionRange(0, 0); } catch (e) {}
+      try { if (focusEl) el.setSelectionRange(0, 0); } catch (e) {}
     });
   } catch (e) {}
   setTimeout(() => {
     try { el.scrollTop = 0; } catch (e) {}
-    try { el.setSelectionRange(0, 0); } catch (e) {}
+    try { if (focusEl) el.setSelectionRange(0, 0); } catch (e) {}
   }, 0);
 }
 
@@ -1280,6 +1292,7 @@ async function handleAutoClipboardText(txt){
     updateStats();
     const cleared = await clearClipboardAfterAutoDownload();
     if (cleared) __lastAutoClipboardHash = '';
+    blurEditableElement();
     return true;
   }
   __lastAutoClipboardHash = hash;
@@ -1291,6 +1304,7 @@ async function handleAutoClipboardText(txt){
   if (hasAlwaysRejectSignalInRawText(els.input.value)){
     clearAllOnReject('⚠️ Tự dán: phát hiện “lên khung cảm nghĩ” ở vùng tên chương đầu trang → đã xóa để chờ chương mới.');
     await clearClipboardAfterAutoDownload();
+    blurEditableElement();
     return true;
   }
 
@@ -1302,6 +1316,7 @@ async function handleAutoClipboardText(txt){
     if (clearedClipboard) __lastAutoClipboardHash = '';
 
     if (!didDownload){
+      blurEditableElement();
       return true;
     }
 
@@ -1822,6 +1837,10 @@ window.addEventListener('pageshow', triggerAutoClipboardCheckFast);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) triggerAutoClipboardCheckFast(); });
 document.addEventListener('pointerdown', triggerAutoClipboardCheckFast, {passive:true});
 document.addEventListener('touchstart', triggerAutoClipboardCheckFast, {passive:true});
+// Chạm ngoài ô nhập thì đóng/không mở bàn phím. Chỉ khi bấm trực tiếp textarea/input mới cho hiện bàn phím.
+document.addEventListener('pointerdown', (e) => {
+  if (!isEditableElement(e.target)) blurEditableElement();
+}, {capture:true, passive:true});
 document.addEventListener('paste', (e) => {
   if (!__autoPasteDownloadOn) return;
   const txt = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
