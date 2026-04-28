@@ -305,6 +305,7 @@
 
 <input id="storyId" class="mini-input" type="number" placeholder="ID truyện (vd: 1,2,3...)" value="1">
 <button class="btn ghost" id="btnResetStoryCounter" type="button">Reset truyện này</button>
+<button class="btn ghost" id="btnResetRemember" type="button">Reset ghi nhớ</button>
 
       <button class="btn primary" id="btnExtract">Lấy đoạn truyện</button>
       <button class="btn success" id="btnOneClick">Làm sạch 1 chạm</button>
@@ -918,6 +919,10 @@ function sanitizeFileName(name){
 }
 
 const LAST_DOWNLOADED_HASH_KEY = 'tool_cat_doan_truyen_last_downloaded_hash_v1';
+// Lưu TOÀN BỘ chương đã tải theo từng ID truyện để chặn trùng không liền kề.
+// Ví dụ: copy chương 1 → chương 2 → copy lại chương 1 vẫn bị bỏ qua.
+const DOWNLOADED_HASH_MAP_KEY = 'tool_cat_doan_truyen_downloaded_hashes_by_story_v2';
+const MAX_DOWNLOADED_HASHES_PER_STORY = 30000;
 const MULTI_BATCH_STATE_KEY = 'tool_multi_txt_batch_state_v1';
 
 function simpleTextHash(str){
@@ -946,6 +951,106 @@ function saveLastDownloadedHash(hash){
 
 let lastDownloadedHash = loadLastDownloadedHash();
 
+function normalizeChapterTextForDuplicateCheck(text){
+  return normalizeNewlines(text)
+    .replace(/\u200B/g, '')
+    .replace(/\ufeff/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function getDuplicateStoryId(){
+  try{
+    if (typeof getStoryId === 'function') return String(getStoryId() || '1').trim() || '1';
+  }catch(e){}
+  try{
+    const el = document.getElementById('storyId');
+    return el ? (String(el.value).trim() || '1') : '1';
+  }catch(e){
+    return '1';
+  }
+}
+
+function loadDownloadedHashMap(){
+  try{
+    const raw = localStorage.getItem(DOWNLOADED_HASH_MAP_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    return (data && typeof data === 'object' && !Array.isArray(data)) ? data : {};
+  }catch(e){
+    return {};
+  }
+}
+
+function saveDownloadedHashMap(map){
+  try{
+    localStorage.setItem(DOWNLOADED_HASH_MAP_KEY, JSON.stringify(map || {}));
+  }catch(e){}
+}
+
+function getDownloadedHashList(storyId){
+  const map = loadDownloadedHashMap();
+  const list = Array.isArray(map[storyId]) ? map[storyId].filter(Boolean) : [];
+
+  // Tương thích dữ liệu cũ: trước đây chỉ nhớ 1 chương gần nhất.
+  if (lastDownloadedHash && !list.includes(lastDownloadedHash)){
+    list.push(lastDownloadedHash);
+    map[storyId] = list;
+    saveDownloadedHashMap(map);
+  }
+  return list;
+}
+
+function hasDownloadedChapterHash(hash){
+  const h = String(hash || '');
+  if (!h) return false;
+  const storyId = getDuplicateStoryId();
+  return getDownloadedHashList(storyId).includes(h);
+}
+
+function rememberDownloadedChapterHash(hash){
+  const h = String(hash || '');
+  if (!h) return;
+
+  const storyId = getDuplicateStoryId();
+  const map = loadDownloadedHashMap();
+  let list = Array.isArray(map[storyId]) ? map[storyId].filter(Boolean) : [];
+
+  if (!list.includes(h)) list.push(h);
+  if (list.length > MAX_DOWNLOADED_HASHES_PER_STORY){
+    list = list.slice(list.length - MAX_DOWNLOADED_HASHES_PER_STORY);
+  }
+
+  map[storyId] = list;
+  saveDownloadedHashMap(map);
+
+  // Vẫn giữ biến cũ để không mất tương thích.
+  lastDownloadedHash = h;
+  saveLastDownloadedHash(h);
+}
+
+function clearDownloadedChapterHashesForStory(storyId){
+  const id = String(storyId || getDuplicateStoryId() || '1').trim() || '1';
+  const map = loadDownloadedHashMap();
+  if (map[id]) delete map[id];
+  saveDownloadedHashMap(map);
+
+  // Xóa luôn khóa cũ vì nó không biết thuộc truyện nào.
+  lastDownloadedHash = '';
+  try{ localStorage.removeItem(LAST_DOWNLOADED_HASH_KEY); }catch(e){}
+}
+
+function getDownloadedChapterHashCount(storyId){
+  return getDownloadedHashList(String(storyId || getDuplicateStoryId() || '1')).length;
+}
+
+function clearMainBoxesForNextChapter(){
+  els.input.value = '';
+  els.output.value = '';
+  updateStats();
+  try { placeTextareaCaretAtStart(els.input); } catch(e) {}
+}
+
 function downloadTxt(){
   const currentText = String(els.output.value || '').trim();
 
@@ -954,14 +1059,15 @@ function downloadTxt(){
     return false;
   }
 
-  // Chỉ tải đúng nội dung hiện có, không lọc lại nữa
-  const currentHash = simpleTextHash(currentText);
+  // Chỉ tải đúng nội dung hiện có, không lọc lại nữa.
+  // Hash dùng bản đã chuẩn hóa nhẹ để cùng 1 chương không lọt qua do khác xuống dòng/khoảng trắng.
+  const currentHash = simpleTextHash(normalizeChapterTextForDuplicateCheck(currentText));
 
-  if (lastDownloadedHash && lastDownloadedHash === currentHash){
-    els.input.value = '';
-    els.output.value = '';
-    updateStats();
-    try { placeTextareaCaretAtStart(els.input); } catch(e) {}
+  if (hasDownloadedChapterHash(currentHash)){
+    const storyId = getDuplicateStoryId();
+    const rememberedCount = getDownloadedChapterHashCount(storyId);
+    clearMainBoxesForNextChapter();
+    setStatus(`⛔ Chương này đã từng tải trong truyện ID <b>${storyId}</b> → bỏ qua, không tải trùng. Đã nhớ <b>${rememberedCount.toLocaleString('vi-VN')}</b> chương.`, 'warn');
     return false;
   }
 
@@ -992,14 +1098,11 @@ function downloadTxt(){
   a.remove();
   URL.revokeObjectURL(url);
 
-  // Ghi nhớ nội dung vừa tải để lần sau so sánh trùng
-  lastDownloadedHash = currentHash;
-  saveLastDownloadedHash(currentHash);
+  // Ghi nhớ nội dung vừa tải vào danh sách chống trùng của truyện hiện tại.
+  rememberDownloadedChapterHash(currentHash);
 
   // Tự xóa nội dung sau khi tải xong (giữ lại cài đặt mốc / tên file / bộ đếm)
-  els.input.value = '';
-  els.output.value = '';
-  updateStats();
+  clearMainBoxesForNextChapter();
 
   if (autoInfo){
     setStatus(`✅ Đã tải file TXT: <b>${fileName}</b> • Tự tăng số: <b>${autoInfo.count}</b> • Đã tự xóa nội dung`, 'ok');
@@ -1781,11 +1884,20 @@ function resetStoryCounter(){
   const map = loadStoryCounterMap();
   if (map[storyId]) delete map[storyId];
   saveStoryCounterMap(map);
-  setStatus(`✅ Đã reset truyện ID = <b>${storyId}</b> về 1`, 'ok');
+  clearDownloadedChapterHashesForStory(storyId);
+  setStatus(`✅ Đã reset truyện ID = <b>${storyId}</b> về 1 và xóa danh sách chương đã nhớ để chống trùng.`, 'ok');
+}
+
+function resetRememberedChapters(){
+  const storyId = (typeof getDuplicateStoryId === 'function') ? getDuplicateStoryId() : getStoryId();
+  clearDownloadedChapterHashesForStory(storyId);
+  try{ __lastAutoClipboardHash = ''; }catch(e){}
+  setStatus(`✅ Đã reset ghi nhớ chống trùng của truyện ID = <b>${storyId}</b>. Giờ copy lại chương cũ sẽ xử lý lại được.`, 'ok');
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('btnResetStoryCounter')?.addEventListener('click', resetStoryCounter);
+  document.getElementById('btnResetRemember')?.addEventListener('click', resetRememberedChapters);
 });
 
 // ===== override download to use the normal filename rule =====
