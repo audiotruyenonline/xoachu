@@ -614,6 +614,7 @@ function getAutoIncrementFileName(fileName){
 function resetCurrentFileCounter(){
   try{
     const rawName = (els.txtFileName && els.txtFileName.value) ? els.txtFileName.value : getDefaultTxtFileName();
+
     const cleanName = makeMainDownloadFileName(rawName);
     const p = splitFileNameParts(cleanName);
     let baseStem = p.stem.replace(/\d+$/,'').trim();
@@ -628,7 +629,8 @@ function resetCurrentFileCounter(){
       els.txtFileName.value = baseStem;
       try { saveSettingsToLocal(); } catch(e) {}
     }
-    setStatus(`✅ Đã reset số tự tăng cho tên gốc: <b>${baseStem}</b>`, 'ok');
+
+    setStatus(`✅ Đã reset số tự tăng. Lần tải tiếp sẽ dùng lại tên cũ từ: <b>${baseStem}1.txt</b>`, 'ok');
   }catch(err){
     setStatus('⚠️ Không reset được số tự tăng.', 'warn');
   }
@@ -1172,6 +1174,9 @@ function downloadTxt(){
     els.txtFileName.value = autoInfo ? `${autoInfo.baseStem}${autoInfo.count}` : baseName;
     try { saveSettingsToLocal(); } catch(e) {}
   }
+
+  // Tải đúng tên file đang có.
+  // Nếu trên máy đã có file cùng tên, việc hiện bảng hỏi hay tự thêm (1) là do trình duyệt quản lý.
 
   const blob = new Blob([currentText], {type:'text/plain;charset=utf-8'});
   const url = URL.createObjectURL(blob);
@@ -1749,7 +1754,10 @@ function downloadPanelTxt(){
   }
 
   const batchNo = Math.max(1, parseInt(__multiTxtCurrentBatchNo, 10) || 1);
-  const fileName = `tap_${batchNo}.txt`;
+  let fileName = `tap_${batchNo}.txt`;
+
+  // Tải đúng tên file gộp hiện tại, không tự đổi tên.
+  // Nếu đã có file cùng tên, trình duyệt sẽ tự xử lý theo cài đặt tải xuống.
 
   const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
   const url = URL.createObjectURL(blob);
