@@ -39,8 +39,8 @@
     .panel{display:flex;flex-direction:column;min-height:480px}
     .panel h3{margin:0;padding:12px 12px 0;font-size:14px}
     .hint{color:var(--muted);font-size:12px;padding:4px 12px 10px}
-    textarea,input{width:100%;border:1px solid var(--line);background:#0b1322;color:var(--text);border-radius:12px;padding:12px;outline:none;font-size:14px}
-    textarea:focus,input:focus{border-color:#3f76d7;box-shadow:0 0 0 3px rgba(78,161,255,.12)}
+    textarea,input,select{width:100%;border:1px solid var(--line);background:#0b1322;color:var(--text);border-radius:12px;padding:12px;outline:none;font-size:14px}
+    textarea:focus,input:focus,select:focus{border-color:#3f76d7;box-shadow:0 0 0 3px rgba(78,161,255,.12)}
     textarea{line-height:1.55;resize:vertical}
     #inputText,#outputText{min-height:360px;margin:0 12px 12px}
     .row{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 12px}
@@ -387,6 +387,22 @@
 
         <div class="two">
           <div class="field">
+            <label>Giới hạn tối thiểu của chương</label>
+            <input id="chapterMinLimit" type="number" min="0" step="1" value="2000" inputmode="numeric">
+            <div class="small">Nhập 0 nếu muốn tắt chặn chương ngắn. Giá trị này sẽ tự lưu.</div>
+          </div>
+          <div class="field">
+            <label>Kiểu đếm giới hạn</label>
+            <select id="chapterMinUnit">
+              <option value="chars" selected>Ký tự</option>
+              <option value="words">Từ</option>
+            </select>
+            <div class="small">Chọn “Từ” nếu bạn muốn lọc theo số từ của chương.</div>
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="field">
             <label>Mốc bắt đầu theo thứ tự ưu tiên (mỗi dòng 1 mốc)</label>
             <textarea id="startMarkersPriority" rows="6">@Bạn đang đọc bản lưu trong hệ thống
 @ Bạn đang đọc bản lưu trong hệ thống</textarea>
@@ -403,7 +419,7 @@ Chương sau</textarea>
         </div>
 
         <div class="field">
-          <div class="small">✅ Các ô mốc bắt đầu / mốc kết thúc / cụm từ xóa thêm / tên file TXT / bật-tắt tự tăng số sẽ tự lưu trên trình duyệt (localStorage). Tải lại trang vẫn còn.</div>
+          <div class="small">✅ Các ô mốc bắt đầu / mốc kết thúc / giới hạn chương / cụm từ xóa thêm / tên file TXT / bật-tắt tự tăng số sẽ tự lưu trên trình duyệt (localStorage). Tải lại trang vẫn còn.</div>
           <label>Cụm từ xóa thêm (mỗi dòng 1 cụm, áp dụng trong “Làm sạch 1 chạm” và “Xóa watermark phổ biến”)</label>
           <textarea id="extraRemovePhrases" rows="12">Chương trước
 Mục lục
@@ -439,6 +455,8 @@ const els = {
   endMarker: document.getElementById('endMarker'),
   startMarkersPriority: document.getElementById('startMarkersPriority'),
   endMarkersPriority: document.getElementById('endMarkersPriority'),
+  chapterMinLimit: document.getElementById('chapterMinLimit'),
+  chapterMinUnit: document.getElementById('chapterMinUnit'),
   extraRemovePhrases: document.getElementById('extraRemovePhrases'),
   fileInput: document.getElementById('fileInput'),
   dropZone: document.getElementById('dropZone'),
@@ -493,7 +511,7 @@ const STORAGE_KEY = 'tool_cat_doan_truyen_settings_v8';
 const FILE_COUNTER_MAP_KEY = 'tool_cat_doan_truyen_filename_counters_v8';
 
 function getSettingsFields(){
-  return ['startMarker','endMarker','startMarkersPriority','endMarkersPriority','extraRemovePhrases','txtFileName','autoIncrementName'];
+  return ['startMarker','endMarker','startMarkersPriority','endMarkersPriority','chapterMinLimit','chapterMinUnit','extraRemovePhrases','txtFileName','autoIncrementName'];
 }
 
 function saveSettingsToLocal(){
@@ -781,7 +799,55 @@ function removeCommonNoise(text){
   t = removeExtraPhrases(t);
   return t.replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
 }
-const MIN_CHAPTER_LENGTH = 2000;
+const DEFAULT_CHAPTER_MIN_LIMIT = 2000;
+const DEFAULT_CHAPTER_MIN_UNIT = 'chars';
+
+function getChapterMinLimit(){
+  const raw = els.chapterMinLimit ? parseInt(els.chapterMinLimit.value, 10) : DEFAULT_CHAPTER_MIN_LIMIT;
+  if (!Number.isFinite(raw) || raw < 0) return DEFAULT_CHAPTER_MIN_LIMIT;
+  return raw;
+}
+
+function getChapterMinUnit(){
+  const value = els.chapterMinUnit ? String(els.chapterMinUnit.value || '').trim() : DEFAULT_CHAPTER_MIN_UNIT;
+  return value === 'words' ? 'words' : 'chars';
+}
+
+function getChapterMinUnitLabel(){
+  return getChapterMinUnit() === 'words' ? 'từ' : 'ký tự';
+}
+
+function countChapterWords(text){
+  const t = normalizeNewlines(text).trim();
+  if (!t) return 0;
+  try{
+    const words = t.match(/[\p{L}\p{N}]+(?:['’’-][\p{L}\p{N}]+)*/gu);
+    return words ? words.length : 0;
+  }catch(err){
+    return t.split(/\s+/).filter(Boolean).length;
+  }
+}
+
+function getChapterLengthCount(text){
+  return getChapterMinUnit() === 'words' ? countChapterWords(text) : String(text || '').trim().length;
+}
+
+function getChapterLengthDisplay(text){
+  const unit = getChapterMinUnit();
+  const unitLabel = getChapterMinUnitLabel();
+  const count = getChapterLengthCount(text);
+  if (unit === 'words'){
+    return `${count.toLocaleString('vi-VN')} ${unitLabel} • ${String(text || '').trim().length.toLocaleString('vi-VN')} ký tự`;
+  }
+  return `${count.toLocaleString('vi-VN')} ${unitLabel}`;
+}
+
+function getChapterLimitWarningText(){
+  const min = getChapterMinLimit();
+  const label = getChapterMinUnitLabel();
+  if (min <= 0) return 'Nội dung không hợp lệ';
+  return `Nội dung dưới ${min.toLocaleString('vi-VN')} ${label}`;
+}
 
 const NON_CHAPTER_KEYWORDS = [
   'lên khung cảm nghĩ'
@@ -864,8 +930,9 @@ function applyChapterLengthFilter(text){
   // Cụm này bị loại ngay, bất kể dài bao nhiêu ký tự.
   if (hasAlwaysRejectSignal(cleaned)) return '';
 
-  const len = cleaned.trim().length;
-  if (len < MIN_CHAPTER_LENGTH) return '';
+  const minLimit = getChapterMinLimit();
+  const currentLength = getChapterLengthCount(cleaned);
+  if (minLimit > 0 && currentLength < minLimit) return '';
   if (isLikelyNonChapter(cleaned)) return '';
   if (!hasChapterStructure(cleaned) && /lên\s*khung\s*cảm\s*nghĩ/i.test(cleaned)) return '';
   return cleaned;
@@ -882,12 +949,12 @@ function runExtract(){
 
   const filtered = applyChapterLengthFilter(res.text);
   if (!filtered){
-    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc có dấu hiệu lên khung cảm nghĩ (không phân biệt hoa/thường) → đã xóa hết để dán chương mới.`);
+    clearAllOnReject(`⚠️ ${getChapterLimitWarningText()} hoặc có dấu hiệu lên khung cảm nghĩ (không phân biệt hoa/thường) → đã xóa hết để dán chương mới.`);
     return;
   }
 
   els.output.value = filtered; updateStats();
-  setStatus(`✅ Đã giữ chương hợp lệ. Start: <b>${res.usedStart}</b> (${res.usedStartSource}) • End: <b>${res.usedEnd}</b> (${res.usedEndSource}) • <b>${filtered.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
+  setStatus(`✅ Đã giữ chương hợp lệ. Start: <b>${res.usedStart}</b> (${res.usedStartSource}) • End: <b>${res.usedEnd}</b> (${res.usedEndSource}) • <b>${getChapterLengthDisplay(filtered)}</b>.`, 'ok');
 }
 function runOneClickClean(){
   if (hasAlwaysRejectSignalInRawText(els.input.value)){
@@ -900,12 +967,12 @@ function runOneClickClean(){
 
   const filtered = applyChapterLengthFilter(res.text);
   if (!filtered){
-    clearAllOnReject(`⚠️ Nội dung dưới ${MIN_CHAPTER_LENGTH.toLocaleString('vi-VN')} ký tự hoặc có dấu hiệu lên khung cảm nghĩ (không phân biệt hoa/thường) → đã xóa hết để dán chương mới.`);
+    clearAllOnReject(`⚠️ ${getChapterLimitWarningText()} hoặc có dấu hiệu lên khung cảm nghĩ (không phân biệt hoa/thường) → đã xóa hết để dán chương mới.`);
     return;
   }
 
   els.output.value = filtered; updateStats();
-  setStatus(`✅ Làm sạch 1 chạm xong. Start: <b>${res.usedStart}</b> • End: <b>${res.usedEnd}</b> • <b>${els.output.value.length.toLocaleString('vi-VN')}</b> ký tự.`, 'ok');
+  setStatus(`✅ Làm sạch 1 chạm xong. Start: <b>${res.usedStart}</b> • End: <b>${res.usedEnd}</b> • <b>${getChapterLengthDisplay(els.output.value)}</b>.`, 'ok');
 }
 async function copyOutput(){
   if (!els.output.value){ setStatus('⚠️ Chưa có kết quả để copy.', 'warn'); return; }
