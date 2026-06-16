@@ -216,83 +216,1147 @@
       .settings-body{padding:10px}
     }
 
-  </style>
+    /* ===== Bottom navigation: Gộp / Home / Cài Đặt ===== */
+    :root{
+      --bottom-nav-height:72px;
+      --bottom-nav-side:12px;
+      --bottom-nav-visible-bottom:10px;
+      --bottom-nav-left:50%;
+      --bottom-nav-width:calc(100vw - 24px);
+    }
+    html,body{
+      width:100%;
+      max-width:100%;
+      overflow-x:hidden;
+    }
+    body{
+      padding-bottom:calc(var(--bottom-nav-height) + 24px + env(safe-area-inset-bottom));
+      touch-action:pan-y;
+    }
+    .wrap{
+      width:100%;
+      max-width:1200px;
+      overflow:hidden;
+      padding-bottom:calc(16px + var(--bottom-nav-height) + 24px + env(safe-area-inset-bottom));
+    }
+    .card,.toolbar,.grid,.panel,textarea,input,select{max-width:100%}
+    .toolbar{overflow:hidden}
+    .toolbar .pill{
+      max-width:100%;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      line-height:1.35;
+    }
+    .bottom-nav{
+      position:fixed !important;
+      left:var(--bottom-nav-left, 50%);
+      bottom:var(--bottom-nav-visible-bottom, calc(10px + env(safe-area-inset-bottom)));
+      transform:translate3d(-50%,0,0);
+      z-index:9998;
+      width:min(680px, var(--bottom-nav-width, calc(100vw - 24px)));
+      min-height:var(--bottom-nav-height);
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:6px;
+      padding:7px;
+      border:1px solid rgba(107,139,201,.38);
+      border-radius:22px;
+      background:linear-gradient(180deg, rgba(19,30,52,.96), rgba(9,15,28,.97));
+      box-shadow:0 18px 42px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.06);
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+      box-sizing:border-box;
+      contain:layout paint;
+      pointer-events:auto;
+    }
+    .bottom-nav::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 50% 110%, rgba(56,211,159,.22), transparent 42%),
+        radial-gradient(circle at 20% 0%, rgba(78,161,255,.10), transparent 36%),
+        radial-gradient(circle at 85% 0%, rgba(139,92,246,.12), transparent 34%);
+    }
+    .bottom-nav-item{
+      position:relative;
+      z-index:1;
+      border:0;
+      min-width:0;
+      border-radius:16px;
+      background:transparent;
+      color:#8f9fbd;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:3px;
+      padding:6px 4px;
+      cursor:pointer;
+      font:inherit;
+      font-weight:800;
+      -webkit-tap-highlight-color:transparent;
+      transition:transform .16s ease, color .16s ease, background .16s ease, box-shadow .16s ease;
+    }
+    .bottom-nav-item:hover{color:#dbe8ff;background:rgba(255,255,255,.04)}
+    .bottom-nav-item:active{transform:scale(.97)}
+    .bottom-nav-item svg{
+      width:24px;
+      height:24px;
+      stroke:currentColor;
+      stroke-width:2.15;
+      fill:none;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+      filter:drop-shadow(0 3px 7px rgba(0,0,0,.3));
+    }
+    .bottom-nav-label{font-size:12px;line-height:1.15;white-space:nowrap;}
+    .bottom-nav-item.active{
+      color:#50f0e2;
+      background:linear-gradient(180deg, rgba(28,232,214,.16), rgba(40,116,255,.06));
+      box-shadow:inset 0 0 0 1px rgba(80,240,226,.18), 0 0 24px rgba(27,230,214,.22);
+    }
+    .bottom-nav-item.active svg{filter:drop-shadow(0 0 9px rgba(80,240,226,.65));}
+    @media (min-width:760px){
+      :root{--bottom-nav-height:76px}
+      .bottom-nav-label{font-size:13px;}
+    }
+    @media (max-width:380px){
+      :root{--bottom-nav-height:68px;--bottom-nav-side:8px}
+      .bottom-nav{padding:6px;border-radius:20px;gap:4px;}
+      .bottom-nav-item{border-radius:15px;padding:5px 3px;}
+      .bottom-nav-item svg{width:22px;height:22px;}
+      .bottom-nav-label{font-size:11px;}
+    }
+    /* ===== End bottom navigation ===== */
+
+    /* ===== 3 không gian riêng: Gộp / Home / Cài Đặt ===== */
+    body[data-space="home"] #drawerPanel,
+    body[data-space="home"] #settingsModal,
+    body[data-space="merge"] .wrap,
+    body[data-space="merge"] #settingsModal,
+    body[data-space="settings"] .wrap,
+    body[data-space="settings"] #drawerPanel{
+      display:none !important;
+    }
+
+    .drawer-backdrop,
+    .modal-backdrop{
+      display:none !important;
+      opacity:0 !important;
+      pointer-events:none !important;
+    }
+
+    body[data-space="merge"] #drawerPanel{
+      position:relative !important;
+      inset:auto !important;
+      top:auto !important;
+      left:auto !important;
+      right:auto !important;
+      bottom:auto !important;
+      transform:none !important;
+      width:min(1200px, calc(100vw - 24px)) !important;
+      max-width:1200px !important;
+      height:auto !important;
+      min-height:calc(100dvh - var(--bottom-nav-height) - 30px) !important;
+      margin:12px auto calc(var(--bottom-nav-height) + 28px + env(safe-area-inset-bottom)) !important;
+      z-index:1 !important;
+      display:flex !important;
+      border:1px solid var(--line) !important;
+      border-radius:18px !important;
+      border-right:1px solid var(--line) !important;
+      box-shadow:0 14px 36px rgba(0,0,0,.28) !important;
+      overflow:hidden !important;
+    }
+
+    body[data-space="settings"] #settingsModal{
+      position:relative !important;
+      inset:auto !important;
+      left:auto !important;
+      top:auto !important;
+      transform:none !important;
+      width:min(1200px, calc(100vw - 24px)) !important;
+      max-width:1200px !important;
+      max-height:none !important;
+      height:auto !important;
+      min-height:calc(100dvh - var(--bottom-nav-height) - 30px) !important;
+      margin:12px auto calc(var(--bottom-nav-height) + 28px + env(safe-area-inset-bottom)) !important;
+      opacity:1 !important;
+      pointer-events:auto !important;
+      z-index:1 !important;
+      display:flex !important;
+      border-radius:18px !important;
+      overflow:hidden !important;
+    }
+
+    body[data-space="settings"] #settingsModal .settings-body{
+      overflow:visible !important;
+    }
+
+    body[data-space="merge"] .drawer-close,
+    body[data-space="settings"] .drawer-close{
+      position:relative;
+    }
+
+    body[data-space="merge"] .drawer-close::after,
+    body[data-space="settings"] .drawer-close::after{
+      content:"Home";
+      position:absolute;
+      right:44px;
+      top:50%;
+      transform:translateY(-50%);
+      font-size:12px;
+      font-weight:700;
+      color:var(--muted);
+      pointer-events:none;
+    }
+
+    @media (max-width:560px){
+      body[data-space="merge"] #drawerPanel,
+      body[data-space="settings"] #settingsModal{
+        width:calc(100vw - 16px) !important;
+        margin-top:8px !important;
+        border-radius:16px !important;
+      }
+    }
+    /* ===== End 3 không gian riêng ===== */
+    /* ===== Mobile glass Home giống ảnh mẫu ===== */
+    body[data-space="home"]{
+      --home-cyan:#21f2ea;
+      --home-purple:#9137ff;
+      --home-glass:rgba(34,43,66,.52);
+      --home-glass-2:rgba(21,27,48,.68);
+      --home-border:rgba(207,226,255,.27);
+      --home-muted:rgba(232,238,252,.62);
+      min-height:100dvh;
+      background:
+        radial-gradient(circle at 17% 22%, rgba(31,240,231,.20), transparent 31%),
+        radial-gradient(circle at 77% 70%, rgba(141,55,255,.18), transparent 34%),
+        radial-gradient(circle at 45% -8%, rgba(117,164,255,.16), transparent 28%),
+        linear-gradient(160deg,#08111f 0%,#101425 48%,#090d1a 100%);
+      color:#f4f8ff;
+    }
+    body[data-space="home"]::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(115deg, transparent 0 28%, rgba(255,255,255,.055) 35%, transparent 44% 100%),
+        radial-gradient(circle at 100% 86%, rgba(255,255,255,.08), transparent 10%);
+      mix-blend-mode:screen;
+      opacity:.8;
+    }
+    body[data-space="home"] .wrap{
+      position:relative;
+      z-index:1;
+      max-width:440px;
+      padding:34px 24px calc(22px + var(--bottom-nav-height) + env(safe-area-inset-bottom));
+    }
+    body[data-space="home"] .header{
+      justify-content:center;
+      text-align:center;
+      margin:0 0 24px;
+      padding:0;
+    }
+    body[data-space="home"] .title{
+      font-size:20px;
+      line-height:1.16;
+      letter-spacing:.015em;
+      text-transform:uppercase;
+      text-shadow:0 2px 14px rgba(255,255,255,.20);
+    }
+    body[data-space="home"] .subtitle,
+    body[data-space="home"] .stats{display:none !important;}
+    body[data-space="home"] .card{
+      background:transparent;
+      border:0;
+      box-shadow:none;
+      overflow:visible;
+      border-radius:0;
+    }
+    body[data-space="home"] .home-toolbar{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      padding:0;
+      border:0;
+      background:transparent;
+      overflow:visible;
+      align-items:stretch;
+    }
+    body[data-space="home"] .home-tool-card{
+      position:relative;
+      min-width:0;
+      border:1px solid var(--home-border);
+      border-radius:18px;
+      background:linear-gradient(145deg, rgba(79,104,128,.44), rgba(20,24,45,.68));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.15),
+        inset 0 -1px 0 rgba(255,255,255,.04),
+        0 14px 28px rgba(0,0,0,.25);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+      padding:15px 14px;
+      overflow:hidden;
+    }
+    body[data-space="home"] .home-tool-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      border-radius:inherit;
+      background:linear-gradient(135deg, rgba(255,255,255,.13), transparent 42%), radial-gradient(circle at 20% 15%, rgba(33,242,234,.10), transparent 38%);
+    }
+    body[data-space="home"] .home-tool-card > *{position:relative;z-index:1;}
+    body[data-space="home"] .home-tool-card h2{
+      margin:0 0 14px;
+      font-size:18px;
+      line-height:1.12;
+      font-weight:900;
+      letter-spacing:-.02em;
+      color:#fff;
+      text-shadow:0 2px 12px rgba(0,0,0,.25);
+    }
+    body[data-space="home"] .home-tool-card .btn,
+    body[data-space="home"] .home-tool-card .mini-input,
+    body[data-space="home"] .home-check-chip{
+      min-height:42px;
+      width:100%;
+      border-radius:14px;
+      border:1px solid rgba(224,237,255,.23);
+      background:rgba(217,231,255,.16);
+      color:#f7fbff;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.13), 0 8px 16px rgba(0,0,0,.18);
+      font-size:14px;
+      font-weight:800;
+    }
+    body[data-space="home"] .home-tool-card .btn{
+      margin:0 0 10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:9px 10px;
+      text-align:center;
+    }
+    body[data-space="home"] .home-tool-card .btn:last-child{margin-bottom:0;}
+    body[data-space="home"] .home-tool-card .btn:hover{transform:none;border-color:rgba(255,255,255,.36);}
+    body[data-space="home"] #btnResetRemember,
+    body[data-space="home"] #btnDownloadTxt{
+      background:rgba(233,242,255,.18);
+      font-size:15px;
+    }
+    body[data-space="home"] #btnDownloadTxt{
+      text-transform:none;
+      color:#fff;
+    }
+    body[data-space="home"] .home-switch{
+      min-height:36px !important;
+      justify-content:flex-start !important;
+      gap:8px;
+      font-size:13px !important;
+      color:#fff;
+      text-shadow:0 0 10px rgba(33,242,234,.22);
+      background:rgba(8,11,24,.38) !important;
+    }
+    body[data-space="home"] .home-switch::after{
+      content:"";
+      margin-left:auto;
+      width:28px;
+      height:28px;
+      border-radius:50%;
+      background:rgba(255,255,255,.88);
+      box-shadow:0 0 14px rgba(33,242,234,.88);
+      flex:0 0 auto;
+    }
+    body[data-space="home"] .home-switch.auto-on{
+      border-color:rgba(33,242,234,.58);
+      background:linear-gradient(90deg, rgba(35,244,235,.75), rgba(32,210,216,.36)) !important;
+      color:#07131d;
+      box-shadow:0 0 24px rgba(33,242,234,.34), inset 0 1px 0 rgba(255,255,255,.25);
+    }
+    body[data-space="home"] .home-number-card{
+      grid-column:1 / -1;
+      display:grid;
+      grid-template-columns:minmax(0,.95fr) minmax(0,1.35fr) auto;
+      gap:10px;
+      align-items:center;
+      padding:14px;
+    }
+    body[data-space="home"] .home-number-card h2{
+      margin:0;
+      font-size:18px;
+      white-space:nowrap;
+    }
+    body[data-space="home"] .home-number-card .mini-input{
+      margin:0;
+      padding:0 12px;
+      text-align:center;
+      font-size:15px;
+      background:rgba(219,232,255,.18);
+    }
+    body[data-space="home"] .home-check-chip{
+      grid-column:2;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      cursor:pointer;
+      padding:0 9px;
+      white-space:nowrap;
+      color:#f4f8ff;
+    }
+    body[data-space="home"] .home-check-chip input{
+      width:18px;
+      height:18px;
+      margin:0;
+      accent-color:var(--home-cyan);
+    }
+    body[data-space="home"] #btnResetNameCounter{
+      grid-column:3;
+      grid-row:1 / span 2;
+      width:auto;
+      min-width:78px;
+      height:42px;
+      margin:0;
+      padding:0 9px;
+      font-size:13px;
+    }
+    body[data-space="home"] .home-util-hidden{display:none !important;}
+    body[data-space="home"] .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:16px;
+      padding:14px 0 0;
+    }
+    body[data-space="home"] .panel{
+      border:1px solid var(--home-border);
+      border-radius:18px;
+      background:linear-gradient(150deg, rgba(72,84,112,.48), rgba(20,24,45,.72));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.13), 0 14px 30px rgba(0,0,0,.28);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+      overflow:hidden;
+      min-height:auto;
+    }
+    body[data-space="home"] .panel h3{
+      padding:16px 16px 10px;
+      margin:0;
+      font-size:18px;
+      font-weight:950;
+      letter-spacing:-.015em;
+      color:#fff;
+    }
+    body[data-space="home"] .panel .hint{display:none;}
+    body[data-space="home"] #inputText,
+    body[data-space="home"] #outputText{
+      min-height:128px;
+      margin:0 16px 12px;
+      width:calc(100% - 32px);
+      border-radius:15px;
+      border:1px solid rgba(207,226,255,.18);
+      background:rgba(4,8,22,.58);
+      color:#f3f7ff;
+      box-shadow:inset 0 2px 14px rgba(0,0,0,.30);
+      font-size:16px;
+      line-height:1.45;
+      padding:16px;
+    }
+    body[data-space="home"] #inputText::placeholder,
+    body[data-space="home"] #outputText::placeholder{color:rgba(232,238,252,.55);}
+    body[data-space="home"] .row{
+      padding:0 16px 16px;
+      gap:0;
+    }
+    body[data-space="home"] .row .btn{
+      width:100%;
+      flex:1 1 100%;
+      min-height:54px;
+      border-radius:15px;
+      border:1px solid rgba(255,255,255,.20);
+      font-size:15px;
+      font-weight:950;
+      letter-spacing:.01em;
+      box-shadow:0 0 22px rgba(150,59,255,.34), inset 0 1px 0 rgba(255,255,255,.18);
+    }
+    body[data-space="home"] .neon-danger{
+      background:linear-gradient(90deg,#c934ef,#7a35ff) !important;
+      color:#fff;
+    }
+    body[data-space="home"] .neon-copy{
+      background:linear-gradient(90deg,#21f2ea,#16d9e8) !important;
+      color:#07131d;
+      box-shadow:0 0 24px rgba(33,242,234,.42), inset 0 1px 0 rgba(255,255,255,.32) !important;
+    }
+    body[data-space="home"] .footer{display:none;}
+    body[data-space="home"] .bottom-nav{
+      width:min(480px, 100vw);
+      bottom:0;
+      min-height:calc(76px + env(safe-area-inset-bottom));
+      border-radius:24px 24px 0 0;
+      border-left:0;
+      border-right:0;
+      border-bottom:0;
+      padding:9px 12px calc(9px + env(safe-area-inset-bottom));
+      background:linear-gradient(180deg, rgba(24,29,49,.97), rgba(16,20,36,.98));
+      box-shadow:0 -16px 40px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    body[data-space="home"] .bottom-nav::after{
+      content:"✦";
+      position:absolute;
+      right:25px;
+      bottom:18px;
+      color:rgba(255,255,255,.76);
+      font-size:34px;
+      filter:drop-shadow(0 0 8px rgba(255,255,255,.25));
+      pointer-events:none;
+    }
+    body[data-space="home"] .bottom-nav::before{
+      background:
+        linear-gradient(90deg, transparent 41%, var(--home-cyan) 45%, var(--home-purple) 58%, transparent 63%),
+        radial-gradient(circle at 50% -10%, rgba(33,242,234,.24), transparent 28%);
+      background-size:100% 3px, 100% 100%;
+      background-repeat:no-repeat;
+      background-position:top center, center;
+    }
+    body[data-space="home"] .bottom-nav-item{
+      gap:4px;
+      font-weight:800;
+      color:rgba(232,238,252,.64);
+    }
+    body[data-space="home"] .bottom-nav-item svg{width:27px;height:27px;}
+    body[data-space="home"] .bottom-nav-label{font-size:16px;font-weight:700;}
+    body[data-space="home"] .bottom-nav-item.active{
+      color:var(--home-cyan);
+      background:transparent;
+      box-shadow:none;
+      text-shadow:0 0 12px rgba(33,242,234,.65);
+    }
+    body[data-space="home"] .bottom-nav-item.active svg{filter:drop-shadow(0 0 8px rgba(33,242,234,.82)) drop-shadow(0 0 5px rgba(145,55,255,.55));}
+    @media (max-width:380px){
+      body[data-space="home"] .wrap{padding-left:16px;padding-right:16px;}
+      body[data-space="home"] .title{font-size:18px;}
+      body[data-space="home"] .home-tool-card{padding:13px 12px;}
+      body[data-space="home"] .home-tool-card h2{font-size:16px;}
+      body[data-space="home"] .home-number-card{grid-template-columns:1fr 1fr;}
+      body[data-space="home"] .home-number-card h2{grid-column:1 / -1;}
+      body[data-space="home"] #btnResetNameCounter{grid-column:auto;grid-row:auto;width:100%;}
+      body[data-space="home"] .home-check-chip{grid-column:auto;}
+      body[data-space="home"] .bottom-nav-label{font-size:14px;}
+    }
+    @media (min-width:760px){
+      body[data-space="home"] .wrap{max-width:760px;}
+      body[data-space="home"] .grid{grid-template-columns:1fr 1fr;}
+    }
+    /* ===== End Mobile glass Home ===== */
+
+
+    /* ===== Chỉnh sát mẫu ảnh: Home glass v14 ===== */
+    body[data-space="home"] .wrap{
+      max-width:480px;
+      padding:34px 18px calc(14px + var(--bottom-nav-height) + env(safe-area-inset-bottom));
+    }
+    body[data-space="home"] .header{margin-bottom:24px;}
+    body[data-space="home"] .title{
+      font-size:clamp(19px, 5vw, 24px);
+      line-height:1.1;
+      white-space:nowrap;
+      letter-spacing:.005em;
+    }
+    body[data-space="home"] .home-toolbar{gap:14px;}
+    body[data-space="home"] .home-tool-card{
+      border-radius:19px;
+      padding:16px 14px 15px;
+      border-color:rgba(220,235,255,.31);
+      background:linear-gradient(145deg, rgba(95,118,137,.43), rgba(25,28,49,.72));
+    }
+    body[data-space="home"] .home-tool-card h2{
+      font-size:18px;
+      margin-bottom:16px;
+    }
+    body[data-space="home"] #btnResetRemember,
+    body[data-space="home"] #btnDownloadTxt{
+      min-height:40px;
+      border-radius:14px;
+      font-size:15px;
+      margin-bottom:14px;
+      background:rgba(232,242,255,.18) !important;
+      color:#fff;
+    }
+    body[data-space="home"] .home-switch{
+      min-height:34px !important;
+      width:100%;
+      margin:0 !important;
+      padding:0 !important;
+      border:0 !important;
+      border-radius:0 !important;
+      background:transparent !important;
+      box-shadow:none !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:space-between !important;
+      gap:8px !important;
+      color:#fff !important;
+      font-size:15px !important;
+      font-weight:650 !important;
+      text-align:left !important;
+      text-shadow:0 2px 8px rgba(0,0,0,.22);
+    }
+    body[data-space="home"] .home-switch::after{content:none !important;display:none !important;}
+    body[data-space="home"] .switch-label{min-width:0;white-space:nowrap;}
+    body[data-space="home"] .switch-pill{
+      width:58px;
+      height:30px;
+      padding:3px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:3px;
+      flex:0 0 auto;
+      color:#f4f8ff;
+      font-size:11px;
+      font-weight:900;
+      line-height:1;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(111,112,129,.43);
+      box-shadow:inset 0 2px 8px rgba(0,0,0,.28);
+    }
+    body[data-space="home"] .switch-state{padding:0 3px;}
+    body[data-space="home"] .switch-knob{
+      width:24px;
+      height:24px;
+      border-radius:999px;
+      background:rgba(238,245,255,.94);
+      box-shadow:0 0 10px rgba(255,255,255,.24);
+      flex:0 0 auto;
+    }
+    body[data-space="home"] .home-switch:not(.auto-on) .switch-pill{
+      flex-direction:row-reverse;
+      color:rgba(255,255,255,.62);
+    }
+    body[data-space="home"] .home-switch.auto-on .switch-pill{
+      color:#06141b;
+      background:linear-gradient(90deg, rgba(33,242,234,.95), rgba(33,242,234,.63));
+      border-color:rgba(33,242,234,.65);
+      box-shadow:0 0 18px rgba(33,242,234,.42), inset 0 1px 0 rgba(255,255,255,.28);
+    }
+    body[data-space="home"] .home-switch.auto-on .switch-knob{
+      box-shadow:0 0 14px rgba(33,242,234,.9);
+    }
+
+    body[data-space="home"] .home-number-card{
+      grid-template-columns:1fr auto auto;
+      min-height:70px;
+      padding:14px 16px;
+      gap:9px;
+    }
+    body[data-space="home"] .home-number-card h2{
+      font-size:19px;
+      margin:0;
+      align-self:center;
+    }
+    body[data-space="home"] .home-number-input{display:none !important;}
+    body[data-space="home"] .home-check-chip{
+      grid-column:auto;
+      min-height:42px;
+      min-width:132px;
+      width:auto;
+      margin:0;
+      padding:0 17px;
+      border-radius:13px;
+      background:rgba(232,242,255,.18);
+      border:1px solid rgba(224,237,255,.25);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 7px 15px rgba(0,0,0,.17);
+      color:#fff;
+      font-size:16px;
+      font-weight:700;
+    }
+    body[data-space="home"] .home-check-chip input{display:none;}
+    body[data-space="home"] #btnResetNameCounter{
+      grid-column:auto;
+      grid-row:auto;
+      min-width:76px;
+      height:42px;
+      border-radius:13px;
+      font-size:14px;
+      padding:0 10px;
+      background:rgba(232,242,255,.18) !important;
+      color:#fff;
+    }
+
+    body[data-space="home"] .grid{gap:14px;padding-top:14px;}
+    body[data-space="home"] .panel{
+      border-radius:19px;
+      border-color:rgba(220,235,255,.31);
+      background:linear-gradient(150deg, rgba(76,84,110,.49), rgba(21,24,45,.72));
+    }
+    body[data-space="home"] .panel h3{
+      font-size:19px;
+      padding:16px 16px 11px;
+    }
+    body[data-space="home"] #inputText,
+    body[data-space="home"] #outputText{
+      min-height:124px;
+      border-radius:15px;
+      font-size:16px;
+      margin-bottom:14px;
+    }
+    body[data-space="home"] .row .btn{
+      min-height:53px;
+      border-radius:15px;
+      font-size:16px;
+    }
+    body[data-space="home"] .bottom-nav{width:min(500px, 100vw);}
+    body[data-space="home"] .bottom-nav-item svg{stroke-width:2.05;}
+    @media (max-width:390px){
+      body[data-space="home"] .wrap{padding-left:14px;padding-right:14px;}
+      body[data-space="home"] .title{font-size:18px;}
+      body[data-space="home"] .home-tool-card h2{font-size:16px;}
+      body[data-space="home"] .home-switch{font-size:13px !important;}
+      body[data-space="home"] .switch-pill{width:54px;height:28px;}
+      body[data-space="home"] .switch-knob{width:22px;height:22px;}
+      body[data-space="home"] .home-number-card{grid-template-columns:1fr auto auto;}
+      body[data-space="home"] .home-number-card h2{grid-column:auto;font-size:17px;}
+      body[data-space="home"] .home-check-chip{min-width:112px;font-size:14px;padding:0 12px;}
+      body[data-space="home"] #btnResetNameCounter{width:auto;min-width:68px;font-size:13px;}
+    }
+    /* ===== End chỉnh sát mẫu ảnh ===== */
+
+
+    /* ===== Fix số chương thành ô nhập + switch ===== */
+    body[data-space="home"] .home-number-card{
+      grid-template-columns:minmax(0,1fr) auto auto !important;
+      align-items:center;
+      gap:10px !important;
+    }
+    body[data-space="home"] .home-number-card h2{display:none !important;}
+    body[data-space="home"] .home-number-input{
+      display:block !important;
+      min-height:42px;
+      margin:0 !important;
+      padding:0 14px !important;
+      text-align:left !important;
+      font-size:16px !important;
+      font-weight:700 !important;
+      color:#ffffff !important;
+      background:rgba(232,242,255,.14) !important;
+      border:1px solid rgba(224,237,255,.25) !important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.14), 0 7px 15px rgba(0,0,0,.17) !important;
+    }
+    body[data-space="home"] .home-number-input::placeholder{
+      color:rgba(255,255,255,.74) !important;
+      font-weight:700;
+    }
+    body[data-space="home"] #btnToggleAutoIncrement{
+      min-width:128px;
+      width:auto !important;
+      min-height:42px !important;
+      margin:0 !important;
+    }
+    body[data-space="home"] #btnResetNameCounter{
+      margin:0 !important;
+    }
+    @media (max-width:390px){
+      body[data-space="home"] .home-number-card{
+        grid-template-columns:minmax(0,1fr) auto auto !important;
+        gap:8px !important;
+      }
+      body[data-space="home"] .home-number-input{
+        font-size:15px !important;
+        padding:0 12px !important;
+      }
+      body[data-space="home"] #btnToggleAutoIncrement{
+        min-width:112px;
+      }
+    }
+    /* ===== End fix số chương ===== */
+
+
+    /* ===== Merge glass redesign ===== */
+    body[data-space="merge"]{
+      background:
+        radial-gradient(circle at 18% 22%, rgba(39,234,229,.28), transparent 24%),
+        radial-gradient(circle at 80% 74%, rgba(170,87,255,.20), transparent 24%),
+        linear-gradient(180deg, #061123 0%, #07102a 50%, #060c1f 100%);
+    }
+    body[data-space="merge"] #drawerPanel{
+      background:transparent !important;
+      border:none !important;
+      box-shadow:none !important;
+      min-height:auto !important;
+    }
+    body[data-space="merge"] .drawer-head{justify-content:center;padding:10px 8px 18px;border-bottom:0;background:transparent;}
+    body[data-space="merge"] .merge-head-inner{width:100%;text-align:center;}
+    body[data-space="merge"] .drawer-title{font-size:clamp(22px,5vw,26px);line-height:1.12;font-weight:900;color:#fff;text-shadow:0 4px 16px rgba(0,0,0,.34);letter-spacing:.01em;}
+    body[data-space="merge"] .drawer-close,body[data-space="merge"] .drawer-close::after{display:none !important;content:none !important;}
+    body[data-space="merge"] .drawer-body{padding:0;overflow:visible;display:grid;gap:14px;}
+    body[data-space="merge"] .merge-actions-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:stretch;}
+    body[data-space="merge"] .merge-action-btn{min-height:116px;margin:0 !important;border-radius:22px;border:1px solid rgba(224,237,255,.26);background:linear-gradient(145deg, rgba(90,108,128,.38), rgba(26,30,49,.78)) !important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 14px 28px rgba(0,0,0,.24);display:flex;flex-direction:column;gap:10px;justify-content:center;padding:14px 8px !important;color:#fff;font-size:14px;font-weight:800;text-align:center;line-height:1.18;white-space:normal;}
+    body[data-space="merge"] .merge-action-btn.glow-cyan{border-color:rgba(33,242,234,.72);box-shadow:0 0 0 1px rgba(33,242,234,.35), 0 0 22px rgba(33,242,234,.26), inset 0 1px 0 rgba(255,255,255,.18);color:#eaffff;}
+    body[data-space="merge"] .merge-action-btn.glow-purple{border-color:rgba(180,93,255,.72);box-shadow:0 0 0 1px rgba(180,93,255,.28), 0 0 22px rgba(180,93,255,.24), inset 0 1px 0 rgba(255,255,255,.18);color:#fff4ff;}
+    body[data-space="merge"] .merge-action-icon{font-size:30px;line-height:1;display:block;filter:drop-shadow(0 0 10px rgba(255,255,255,.10));}
+    body[data-space="merge"] .drawer-card{border:1px solid rgba(224,237,255,.24);border-radius:26px;padding:18px 16px 16px;background:linear-gradient(145deg, rgba(88,108,126,.42), rgba(24,28,48,.78));box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 18px 34px rgba(0,0,0,.26);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);}
+    body[data-space="merge"] .drawer-card h4{margin:0 0 14px;font-size:22px;line-height:1.12;color:#fff;font-weight:900;letter-spacing:-.02em;}
+    body[data-space="merge"] .merge-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+    body[data-space="merge"] .field{gap:8px;}
+    body[data-space="merge"] .field label{font-size:14px;color:rgba(255,255,255,.92);font-weight:700;}
+    body[data-space="merge"] .drawer-input,body[data-space="merge"] .drawer-txt{border-radius:16px;border:1px solid rgba(224,237,255,.20);background:rgba(217,231,255,.12);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 8px 18px rgba(0,0,0,.12);}
+    body[data-space="merge"] .drawer-input::placeholder,body[data-space="merge"] .drawer-txt::placeholder{color:rgba(232,238,252,.56);}
+    body[data-space="merge"] .merge-toggle-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;}
+    body[data-space="merge"] .merge-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#fff;font-size:15px;font-weight:800;min-height:44px;position:relative;}
+    body[data-space="merge"] .merge-toggle input{position:absolute;opacity:0;pointer-events:none;}
+    body[data-space="merge"] .merge-toggle-pill{width:86px;height:36px;border-radius:999px;padding:4px;position:relative;display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;border:1px solid rgba(255,255,255,.18);background:rgba(111,112,129,.42);box-shadow:inset 0 2px 8px rgba(0,0,0,.28);overflow:hidden;}
+    body[data-space="merge"] .merge-toggle-state{position:relative;z-index:2;font-size:11px;font-weight:900;width:30px;text-align:center;color:rgba(255,255,255,.52);}
+    body[data-space="merge"] .merge-toggle-knob{position:absolute;top:3px;left:3px;width:28px;height:28px;border-radius:999px;background:rgba(238,245,255,.94);box-shadow:0 0 12px rgba(255,255,255,.22);transition:transform .2s ease, box-shadow .2s ease;}
+    body[data-space="merge"] .merge-toggle input:checked + .merge-toggle-pill{background:linear-gradient(90deg, rgba(33,242,234,.95), rgba(33,242,234,.60));border-color:rgba(33,242,234,.62);box-shadow:0 0 18px rgba(33,242,234,.38), inset 0 1px 0 rgba(255,255,255,.22);}
+    body[data-space="merge"] .merge-toggle input:checked + .merge-toggle-pill .merge-state-on{color:#06212a;}
+    body[data-space="merge"] .merge-toggle input:checked + .merge-toggle-pill .merge-state-off{color:rgba(6,33,42,.32);}
+    body[data-space="merge"] .merge-toggle input:checked + .merge-toggle-pill .merge-toggle-knob{transform:translateX(50px);box-shadow:0 0 14px rgba(33,242,234,.80);}
+    body[data-space="merge"] .merge-toggle input:not(:checked) + .merge-toggle-pill .merge-state-off{color:#f4f8ff;}
+    body[data-space="merge"] .merge-hidden-tools{display:none;}
+    body[data-space="merge"] .merge-divider{height:1px;background:linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);margin:8px 0 14px;}
+    body[data-space="merge"] .merge-list-title{font-size:22px;line-height:1.12;color:#fff;font-weight:900;margin-bottom:12px;letter-spacing:-.02em;}
+    body[data-space="merge"] .merge-batch-info{margin-bottom:10px;color:rgba(232,238,252,.75);font-size:12px;}
+    body[data-space="merge"] .merge-file-list{max-height:260px;padding:6px;border-radius:18px;border:1px solid rgba(224,237,255,.18);background:rgba(13,18,37,.20);}
+    body[data-space="merge"] .merge-file-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 14px;border-radius:18px;border:1px solid rgba(224,237,255,.18);background:linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.05));color:#fff;margin-bottom:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);}
+    body[data-space="merge"] .merge-file-row:last-child{margin-bottom:0;}
+    body[data-space="merge"] .merge-file-name{min-width:0;display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700;}
+    body[data-space="merge"] .merge-file-icon{font-size:24px;opacity:.9;}
+    body[data-space="merge"] .merge-file-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    body[data-space="merge"] .merge-file-meta,body[data-space="merge"] .merge-file-size{font-size:16px;color:rgba(255,255,255,.88);white-space:nowrap;}
+    body[data-space="merge"] .merge-output-text{min-height:150px;margin-bottom:12px;font-size:16px;line-height:1.45;}
+    body[data-space="merge"] .merge-meta{margin-bottom:12px;color:rgba(232,238,252,.68);font-size:12px;display:none;}
+    body[data-space="merge"] .merge-output-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    body[data-space="merge"] .merge-output-actions .btn{margin:0;min-height:58px;border-radius:18px;font-size:16px;font-weight:900;border:1px solid rgba(255,255,255,.18);box-shadow:0 0 22px rgba(150,59,255,.28), inset 0 1px 0 rgba(255,255,255,.18);}
+    body[data-space="merge"] #btnCopyPanelTxtBottom{background:linear-gradient(90deg,#c934ef,#7a35ff) !important;color:#fff;}
+    body[data-space="merge"] #btnDownloadPanelTxtBottom{background:linear-gradient(90deg,#21f2ea,#16d9e8) !important;color:#07131d;box-shadow:0 0 24px rgba(33,242,234,.38), inset 0 1px 0 rgba(255,255,255,.26) !important;}
+    @media (max-width:560px){body[data-space="merge"] #drawerPanel{width:calc(100vw - 18px) !important;margin-top:10px !important;margin-bottom:calc(var(--bottom-nav-height) + 18px + env(safe-area-inset-bottom)) !important;}body[data-space="merge"] .merge-actions-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}body[data-space="merge"] .merge-action-btn{min-height:104px;font-size:12px;border-radius:20px;padding:12px 6px !important;}body[data-space="merge"] .merge-action-icon{font-size:28px;}body[data-space="merge"] .drawer-card h4,body[data-space="merge"] .merge-list-title{font-size:19px;}body[data-space="merge"] .merge-config-grid,body[data-space="merge"] .merge-toggle-grid{grid-template-columns:1fr 1fr;gap:10px;}body[data-space="merge"] .field label{font-size:12px;}body[data-space="merge"] .drawer-input{font-size:13px;padding:12px 10px;}body[data-space="merge"] .merge-toggle{font-size:13px;gap:8px;}body[data-space="merge"] .merge-toggle-pill{width:76px;height:34px;}body[data-space="merge"] .merge-toggle-state{font-size:10px;width:26px;}body[data-space="merge"] .merge-toggle-knob{width:26px;height:26px;}body[data-space="merge"] .merge-toggle input:checked + .merge-toggle-pill .merge-toggle-knob{transform:translateX(42px);}body[data-space="merge"] .merge-file-row{grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:10px 12px;border-radius:16px;}body[data-space="merge"] .merge-file-name{font-size:14px;gap:8px;}body[data-space="merge"] .merge-file-icon{font-size:20px;}body[data-space="merge"] .merge-file-meta,body[data-space="merge"] .merge-file-size{font-size:12px;}body[data-space="merge"] .merge-output-actions{grid-template-columns:1fr 1fr;gap:10px;}body[data-space="merge"] .merge-output-actions .btn{font-size:14px;min-height:54px;border-radius:16px;}}
+    /* ===== End merge glass redesign ===== */
+
+
+    /* ===== Settings glass redesign ===== */
+    body[data-space="settings"]{
+      background:
+        radial-gradient(circle at 18% 22%, rgba(39,234,229,.26), transparent 24%),
+        radial-gradient(circle at 80% 78%, rgba(170,87,255,.22), transparent 26%),
+        linear-gradient(180deg, #061123 0%, #07102a 52%, #060c1f 100%);
+    }
+    body[data-space="settings"] #settingsModal{
+      background:transparent !important;
+      border:none !important;
+      box-shadow:none !important;
+      overflow:visible !important;
+      min-height:auto !important;
+    }
+    body[data-space="settings"] .settings-glass-head{
+      justify-content:center;
+      padding:10px 8px 18px;
+      border-bottom:0;
+      background:transparent;
+    }
+    body[data-space="settings"] .settings-head-center{
+      width:100%;
+      text-align:center;
+    }
+    body[data-space="settings"] .settings-title{
+      font-size:clamp(22px,5vw,26px);
+      line-height:1.12;
+      font-weight:900;
+      color:#fff;
+      text-shadow:0 4px 16px rgba(0,0,0,.34);
+      letter-spacing:.01em;
+    }
+    body[data-space="settings"] .settings-head .drawer-close,
+    body[data-space="settings"] .settings-head .drawer-close::after{
+      display:none !important;
+      content:none !important;
+    }
+    body[data-space="settings"] .settings-glass-body{
+      padding:0;
+      overflow:visible !important;
+      display:grid;
+      gap:14px;
+    }
+    body[data-space="settings"] .settings-card{
+      border:1px solid rgba(224,237,255,.24);
+      border-radius:26px;
+      padding:18px 16px 16px;
+      background:linear-gradient(145deg, rgba(88,108,126,.42), rgba(24,28,48,.78));
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 18px 34px rgba(0,0,0,.26);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+    }
+    body[data-space="settings"] .settings-card h2{
+      margin:0 0 16px;
+      font-size:22px;
+      line-height:1.12;
+      color:#fff;
+      font-weight:900;
+      letter-spacing:-.02em;
+      text-shadow:0 3px 12px rgba(0,0,0,.24);
+    }
+    body[data-space="settings"] .settings-top-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+    body[data-space="settings"] .settings-field{
+      min-width:0;
+      border:1px solid rgba(224,237,255,.20);
+      border-radius:20px;
+      background:linear-gradient(145deg, rgba(112,139,152,.25), rgba(34,38,59,.45));
+      padding:12px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
+    }
+    body[data-space="settings"] .settings-short-field{
+      padding:0;
+      background:transparent;
+      border:0;
+      box-shadow:none;
+    }
+    body[data-space="settings"] .settings-field label{
+      display:block;
+      margin:0 0 8px;
+      font-size:14px;
+      line-height:1.25;
+      color:rgba(255,255,255,.92);
+      font-weight:800;
+    }
+    body[data-space="settings"] .settings-short-field label{
+      position:absolute;
+      width:1px;
+      height:1px;
+      overflow:hidden;
+      opacity:0;
+      pointer-events:none;
+    }
+    body[data-space="settings"] input,
+    body[data-space="settings"] textarea,
+    body[data-space="settings"] select{
+      width:100%;
+      border-radius:17px;
+      border:1px solid rgba(224,237,255,.20);
+      background:rgba(217,231,255,.12);
+      color:#fff;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.10), inset 0 8px 18px rgba(0,0,0,.12);
+      font-weight:650;
+    }
+    body[data-space="settings"] input{
+      min-height:48px;
+      padding:0 14px;
+      font-size:16px;
+    }
+    body[data-space="settings"] textarea{
+      min-height:116px;
+      padding:14px 16px;
+      font-size:16px;
+      line-height:1.42;
+      resize:vertical;
+      background:rgba(6,10,27,.58);
+    }
+    body[data-space="settings"] input::placeholder,
+    body[data-space="settings"] textarea::placeholder{
+      color:rgba(232,238,252,.56);
+      font-weight:600;
+    }
+    body[data-space="settings"] .settings-segment-select{
+      min-height:48px;
+      padding:0 14px;
+      font-size:18px;
+      text-align:center;
+      appearance:none;
+      -webkit-appearance:none;
+      background:
+        linear-gradient(90deg, rgba(232,242,255,.16) 0 49%, rgba(255,255,255,.20) 50% 100%),
+        rgba(217,231,255,.12);
+    }
+    body[data-space="settings"] .settings-marker-card h2,
+    body[data-space="settings"] .settings-clean-card h2{
+      font-size:22px;
+      margin-bottom:12px;
+    }
+    body[data-space="settings"] .settings-section-gap{
+      margin-top:24px !important;
+    }
+    body[data-space="settings"] .settings-clean-card textarea{
+      min-height:168px;
+      margin-bottom:14px;
+    }
+    body[data-space="settings"] .settings-actions-row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    body[data-space="settings"] .settings-actions-row .btn{
+      margin:0;
+      min-height:56px;
+      border-radius:18px;
+      font-size:15px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow:0 0 22px rgba(150,59,255,.28), inset 0 1px 0 rgba(255,255,255,.18);
+      white-space:normal;
+      line-height:1.15;
+    }
+    body[data-space="settings"] .settings-save-btn{
+      background:linear-gradient(90deg,#21f2ea,#16d9e8) !important;
+      color:#07131d !important;
+      box-shadow:0 0 24px rgba(33,242,234,.38), inset 0 1px 0 rgba(255,255,255,.26) !important;
+    }
+    body[data-space="settings"] .settings-reset-btn{
+      background:linear-gradient(90deg,#c934ef,#7a35ff) !important;
+      color:#fff !important;
+    }
+    body[data-space="settings"] .small,
+    body[data-space="settings"] .drawer-note{
+      display:none !important;
+    }
+    @media (max-width:560px){
+      body[data-space="settings"] #settingsModal{
+        width:calc(100vw - 18px) !important;
+        margin-top:10px !important;
+        margin-bottom:calc(var(--bottom-nav-height) + 18px + env(safe-area-inset-bottom)) !important;
+      }
+      body[data-space="settings"] .settings-card{
+        border-radius:24px;
+        padding:16px 14px 14px;
+      }
+      body[data-space="settings"] .settings-card h2,
+      body[data-space="settings"] .settings-marker-card h2,
+      body[data-space="settings"] .settings-clean-card h2{
+        font-size:19px;
+      }
+      body[data-space="settings"] .settings-top-grid{
+        grid-template-columns:1fr 1fr;
+        gap:12px;
+      }
+      body[data-space="settings"] .settings-field{
+        padding:10px;
+        border-radius:18px;
+      }
+      body[data-space="settings"] .settings-field label{
+        font-size:13px;
+      }
+      body[data-space="settings"] input{
+        min-height:44px;
+        font-size:14px;
+        padding:0 12px;
+      }
+      body[data-space="settings"] textarea{
+        min-height:104px;
+        font-size:15px;
+        border-radius:16px;
+      }
+      body[data-space="settings"] .settings-clean-card textarea{
+        min-height:150px;
+      }
+      body[data-space="settings"] .settings-actions-row{
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+      }
+      body[data-space="settings"] .settings-actions-row .btn{
+        min-height:54px;
+        font-size:13px;
+        border-radius:16px;
+      }
+    }
+    /* ===== End settings glass redesign ===== */
+
+</style>
 </head>
 <body>
 <div class="drawer-backdrop" id="drawerBackdrop"></div>
 <aside class="drawer-panel" id="drawerPanel" aria-hidden="true">
-  <div class="drawer-head">
-    <div>
-      <div class="drawer-title">☰ Không gian TXT</div>
-      <div class="drawer-note">Chọn nhiều tệp TXT, gộp làm 1 và copy luôn</div>
+  <div class="drawer-head merge-head">
+    <div class="merge-head-inner">
+      <div class="drawer-title">TOOL CẮT &amp; LÀM SẠCH TRUYỆN</div>
     </div>
     <button class="drawer-close" id="btnCloseDrawer" type="button" aria-label="Đóng">✕</button>
   </div>
-  <div class="drawer-body">
-    <div class="drawer-card">
-      <h4>📂 Gộp TXT theo tên chương / batch tự động</h4>
-      <div class="drawer-actions">
-        <label class="btn" for="multiTxtFileInput">Chọn nhiều TXT</label>
-        <input id="multiTxtFileInput" type="file" accept=".txt,text/plain" multiple style="display:none">
-        <label class="btn" for="multiTxtFolderInput">Chọn thư mục TXT</label>
-        <input id="multiTxtFolderInput" type="file" accept=".txt,text/plain" webkitdirectory directory multiple style="display:none">
-        <button class="btn" id="btnCopyPanelTxt" type="button">Copy ô TXT</button>
-                <button class="btn ghost" id="btnClearPanelTxt" type="button">Xóa ô TXT</button>
-        <button class="btn warn" id="btnDownloadPanelTxt" type="button">Lọc & tải TXT</button>
-      </div>
-      <div class="drawer-note">Tool sẽ tự đọc số chương trong tên file như <b>t1_c1.txt</b>, <b>t1_c60.txt</b>, sắp xếp lại đúng thứ tự, rồi lấy batch tiếp theo mỗi lần bấm.</div>
+  <div class="drawer-body merge-body">
+    <div class="merge-actions-grid">
+      <label class="btn merge-action-btn glow-cyan" for="multiTxtFileInput">
+        <span class="merge-action-icon">📄</span>
+        <span>Chọn nhiều TXT</span>
+      </label>
+      <label class="btn merge-action-btn glow-purple" for="multiTxtFolderInput">
+        <span class="merge-action-icon">📁</span>
+        <span>Chọn thư mục TXT</span>
+      </label>
+      <button class="btn merge-action-btn" id="btnClearPanelTxt" type="button">
+        <span class="merge-action-icon">🗑️</span>
+        <span>Xóa ô TXT</span>
+      </button>
+      <input id="multiTxtFileInput" type="file" accept=".txt,text/plain" multiple style="display:none">
+      <input id="multiTxtFolderInput" type="file" accept=".txt,text/plain" webkitdirectory directory multiple style="display:none">
+    </div>
 
-      <div class="two" style="margin-top:8px">
+    <div class="drawer-card merge-config-card">
+      <h4>Khu vực thiết lập batch</h4>
+      <div class="merge-config-grid">
         <div class="field">
-          <label style="font-size:12px;color:var(--muted)">Số chương mỗi batch</label>
-          <input id="multiTxtBatchSize" class="drawer-input" type="number" min="1" step="1" value="60">
+          <label>Số chương mỗi batch</label>
+          <input id="multiTxtBatchSize" class="drawer-input" type="number" min="1" step="1" value="50">
         </div>
         <div class="field">
-          <label style="font-size:12px;color:var(--muted)">Tên file gộp khi tải (tự động)</label>
-          <input id="multiTxtFileName" class="drawer-input" type="text" placeholder="tap_1.txt">
+          <label>Tên file gộp khi tải</label>
+          <input id="multiTxtFileName" class="drawer-input" type="text" placeholder="[TenTruyen]_Batch_{0}{1}.txt">
         </div>
       </div>
 
-      <div class="drawer-actions" style="margin-top:8px">
-        <label class="chip" style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-          <input id="multiTxtAutoSort" type="checkbox" checked style="width:auto;margin:0">
-          Tự sort theo tên
+      <div class="merge-toggle-grid">
+        <label class="merge-toggle">
+          <span class="merge-toggle-text">Tự sort theo tên</span>
+          <input id="multiTxtAutoSort" type="checkbox" checked>
+          <span class="merge-toggle-pill">
+            <span class="merge-toggle-state merge-state-on">ON</span>
+            <span class="merge-toggle-state merge-state-off">OFF</span>
+            <span class="merge-toggle-knob"></span>
+          </span>
         </label>
-        <label class="chip" style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-          <input id="multiTxtAutoBatch" type="checkbox" checked style="width:auto;margin:0">
-          Tự nhớ batch tiếp
+
+        <label class="merge-toggle">
+          <span class="merge-toggle-text">Tự nhớ batch tiếp</span>
+          <input id="multiTxtAutoBatch" type="checkbox" checked>
+          <span class="merge-toggle-pill">
+            <span class="merge-toggle-state merge-state-on">ON</span>
+            <span class="merge-toggle-state merge-state-off">OFF</span>
+            <span class="merge-toggle-knob"></span>
+          </span>
         </label>
+      </div>
+
+      <div class="merge-hidden-tools">
         <button class="btn ghost" id="btnResetMultiBatch" type="button">Reset batch</button>
         <button class="btn ghost" id="btnResetMultiFileName" type="button">Reset tên tập</button>
       </div>
 
-      <div class="drawer-note" id="multiTxtBatchInfo">Batch hiện tại: chưa có dữ liệu.</div>
-      <div class="drawer-list" id="multiTxtFileList">Chưa chọn tệp TXT nào.</div>
+      <div class="merge-divider"></div>
+      <div class="merge-list-title">DANH SÁCH FILE TXT ĐÃ CHỌN</div>
+      <div class="drawer-note merge-batch-info" id="multiTxtBatchInfo">Batch hiện tại: chưa có dữ liệu.</div>
+      <div class="drawer-list merge-file-list" id="multiTxtFileList">Chưa chọn tệp TXT nào.</div>
     </div>
 
-    <div class="drawer-card">
-      <h4>📝 Ô văn bản TXT (gộp để copy)</h4>
-      <textarea id="multiTxtTextarea" class="drawer-txt" placeholder="Sau khi chọn nhiều file TXT, nội dung gộp sẽ hiện ở đây để bạn copy 1 lần..."></textarea>
-      <div class="drawer-note" id="multiTxtMeta" style="white-space:pre-line;">Tổng: 0 tệp • 0 ký tự • 0 từ • ⏱ x1: 0s | x1.25: 0s | x1.5: 0s | x2: 0s</div>
+    <div class="drawer-card merge-output-card">
+      <h4>Ô NỘI DUNG ĐÃ GỘP</h4>
+      <textarea id="multiTxtTextarea" class="drawer-txt merge-output-text" placeholder="Nội dung sau khi gộp sẽ hiển thị tại đây..."></textarea>
+      <div class="drawer-note merge-meta" id="multiTxtMeta" style="white-space:pre-line;">Tổng: 0 tệp • 0 ký tự • 0 từ • ⏱ x1: 0s | x1.25: 0s | x1.5: 0s | x2: 0s</div>
+      <div class="merge-output-actions">
+        <button class="btn neon-danger" id="btnCopyPanelTxtBottom" type="button">📋 COPY TOÀN BỘ</button>
+        <button class="btn neon-copy" id="btnDownloadPanelTxtBottom" type="button">⏷ TẢI XUỐNG TXT</button>
+      </div>
     </div>
   </div>
 </aside>
 
 <div class="wrap">
-  <div class="appbar">
-    <button class="hamburger" id="btnOpenDrawer" type="button" aria-label="Mở không gian TXT">☰</button>
-    <div>
-      <div class="appbar-title">Menu nhanh TXT</div>
-      <div class="appbar-sub">Bấm 3 gạch ngang để vào không gian riêng (mở nhiều TXT + copy 1 lần)</div>
-    </div>
-    <div class="appbar-actions">
-      <button class="icon-btn" id="btnOpenSettings" type="button" aria-label="Mở cài đặt mốc">⚙</button>
-    </div>
-  </div>
   <div class="header">
     <div>
-      <div class="title">Tool cắt & làm sạch chương truyện (v12 PRO)</div>
-      <div class="subtitle">Hỗ trợ <b>mốc bắt đầu</b> và <b>mốc kết thúc</b> theo <b>thứ tự ưu tiên</b> • mỗi dòng 1 mốc • <b>tự lưu cài đặt mốc</b> • <b>tự nhớ tên file TXT</b> • <b>tự tăng số tên file</b></div>
+      <div class="title">Tool cắt &amp; làm sạch truyện</div>
+      <div class="subtitle"><b>v12 PRO</b> • Home glass neon giống mẫu • Dán nội dung, tự làm sạch, copy kết quả và tải TXT.</div>
     </div>
     <div class="stats">
       <div class="chip" id="statInput">Input: 0 ký tự</div>
@@ -301,62 +1365,57 @@
   </div>
 
   <div class="card">
-    <div class="toolbar">
+    <div class="toolbar home-toolbar">
+      <section class="home-tool-card home-memory-card" aria-label="Tùy chọn ghi nhớ">
+        <h2>Tùy chọn ghi nhớ</h2>
+        <button class="btn ghost" id="btnResetRemember" type="button">Reset ghi nhớ</button>
+        <button class="btn auto-on home-switch" id="btnToggleDuplicateMemory" type="button"><span class="switch-label">Ghi nhớ trùng:</span><span class="switch-pill"><span class="switch-state">BẬT</span><span class="switch-knob"></span></span></button>
+      </section>
 
-<input id="storyId" class="mini-input" type="number" placeholder="ID truyện (vd: 1,2,3...)" value="1">
-<button class="btn ghost" id="btnResetStoryCounter" type="button">Reset truyện này</button>
-<button class="btn ghost" id="btnResetRemember" type="button">Reset ghi nhớ</button>
-<button class="btn auto-on" id="btnToggleDuplicateMemory" type="button">Ghi nhớ trùng: BẬT</button>
+      <section class="home-tool-card home-download-card" aria-label="Cài đặt tải">
+        <h2>Cài đặt tải</h2>
+        <button class="btn warn home-download-btn" id="btnDownloadTxt" type="button">⇩ Tải TXT</button>
+        <button class="btn home-switch" id="btnAutoPasteDownload" type="button"><span class="switch-label">Tự dán & tải:</span><span class="switch-pill"><span class="switch-state">TẮT</span><span class="switch-knob"></span></span></button>
+      </section>
 
-      <button class="btn primary" id="btnExtract">Lấy đoạn truyện</button>
-      <button class="btn success" id="btnOneClick">Làm sạch 1 chạm</button>
-      <button class="btn auto-on" id="btnAutoPasteDownload" type="button">Tắt tự dán & tải</button>
-      <button class="btn" id="btnCopy">Copy kết quả</button>
-      <button class="btn warn" id="btnDownloadTxt">Tải TXT</button>
-      <input id="txtFileName" class="mini-input" type="text" placeholder="Tên file TXT (tự nhớ)">
-      <label class="chip" style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-        <input id="autoIncrementName" type="checkbox" checked style="width:auto;margin:0">
-        Tự tăng số
-      </label>
-      <button class="btn ghost" id="btnResetNameCounter" type="button">Reset số</button>
-      <button class="btn ghost" id="btnSwap">Đưa kết quả lên ô trên</button>
-      <button class="btn ghost" id="btnClearAll">Xóa tất cả</button>
-      <label class="btn" for="fileInput">Mở file .txt</label>
-      <input id="fileInput" type="file" accept=".txt,text/plain">
-      <span class="pill">Mẹo: <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> = Lấy đoạn • 3 gạch ngang mở không gian TXT • mốc/tên file/bộ đếm tự lưu</span>
+      <section class="home-tool-card home-number-card" aria-label="Thiết lập số chương">
+        <input id="txtFileName" class="mini-input home-number-input" type="text" placeholder="Nhập số chương">
+        <input id="autoIncrementName" type="checkbox" checked hidden>
+        <button class="btn auto-on home-switch" id="btnToggleAutoIncrement" type="button"><span class="switch-label">Tự tăng số:</span><span class="switch-pill"><span class="switch-state">BẬT</span><span class="switch-knob"></span></span></button>
+        <button class="btn ghost" id="btnResetNameCounter" type="button">Reset số</button>
+      </section>
+
+      <button class="btn home-util-hidden" id="btnCopy" type="button">Copy kết quả</button>
+      <button class="btn ghost home-util-hidden" id="btnClearAll" type="button">Xóa tất cả</button>
+      <span class="pill home-util-hidden">Mẹo: Dán nội dung → tool tự làm sạch → <b>Copy kết quả</b> hoặc <b>Tải TXT</b></span>
     </div>
 
 
     <div class="grid">
       <div class="panel">
-        <h3>Văn bản gốc (dán vào đây)</h3>
-        <div class="hint">Dán toàn bộ nội dung copy từ web. Tool sẽ tự cắt theo mốc ưu tiên bạn nhập.</div>
-        <div class="drop" id="dropZone">Kéo thả file <b>.txt</b> vào đây (hoặc bấm “Mở file .txt”)</div>
-        <textarea id="inputText" placeholder="Dán văn bản vào đây..."></textarea>
-        <div class="row">
-          <button class="btn" id="btnPaste">Dán từ clipboard</button>
-          <button class="btn" id="btnTrimInput">Xóa khoảng trắng đầu/cuối</button>
-          <button class="btn" id="btnNormalize">Chuẩn hóa xuống dòng</button>
+        <h3>Ô VĂN BẢN GỐC</h3>
+        <div class="hint">Dán toàn bộ nội dung copy từ web. Tool sẽ tự cắt và làm sạch theo mốc bạn đã cài.</div>
+        <textarea id="inputText" placeholder="Nhập hoặc dán nội dung truyện vào đây..."></textarea>
+        <div class="row row-single-action">
+          <button class="btn neon-danger" id="btnHomeInputClear">🗑 XÓA TẤT CẢ</button>
         </div>
       </div>
 
       <div class="panel">
-        <h3>Kết quả (đoạn truyện đã cắt)</h3>
-        <div class="hint">Kết quả sau khi cắt (và làm sạch nếu dùng “Làm sạch 1 chạm”).</div>
-        <textarea id="outputText" placeholder="Kết quả sẽ hiện ở đây..." readonly></textarea>
-        <div class="row">
-          <button class="btn" id="btnSelectOutput">Chọn toàn bộ kết quả</button>
-          <button class="btn" id="btnRemoveBlankLines">Gộp dòng trống dư</button>
-          <button class="btn" id="btnRemoveWatermark">Xóa watermark phổ biến</button>
+        <h3>Ô KẾT QUẢ SẠCH</h3>
+        <div class="hint">Kết quả sau khi cắt và làm sạch sẽ hiển thị ở đây.</div>
+        <textarea id="outputText" placeholder="Nội dung sau khi làm sạch sẽ hiển thị tại đây..." readonly></textarea>
+        <div class="row row-single-action">
+          <button class="btn neon-copy" id="btnHomeOutputCopy">▣ COPY KẾT QUẢ</button>
         </div>
       </div>
     </div>
 
-    <div id="status" class="status" role="status" aria-live="polite">Sẵn sàng. Dán văn bản vào ô bên trái rồi bấm <b>Lấy đoạn truyện</b> hoặc <b>Làm sạch 1 chạm</b>.</div>
+    <div id="status" class="status" role="status" aria-live="polite">Sẵn sàng. Dán văn bản vào ô bên trái, tool sẽ tự làm sạch; sau đó bạn có thể <b>Copy kết quả</b> hoặc <b>Tải TXT</b>.</div>
 
     <div class="footer">
-      <div>✅ Offline • ✅ GitHub Pages • ✅ 3 gạch ngang/panel riêng • ✅ Mở nhiều TXT cùng lúc • ✅ Copy xong tự xóa panel TXT • ✅ Tự xóa sau khi tải</div>
-      <div class="mono">v12-pro-chapter-batch</div>
+      <div>✅ Offline • ✅ GitHub Pages • ✅ 3 không gian riêng • ✅ Tự làm sạch khi dán • ✅ Copy/Tải TXT nhanh</div>
+      <div class="mono">v12-pro-home-clean</div>
     </div>
   </div>
 </div>
@@ -364,64 +1423,57 @@
 
 <div class="modal-backdrop" id="settingsBackdrop"></div>
 <section class="settings-modal" id="settingsModal" aria-hidden="true">
-  <div class="settings-head">
-    <div>
-      <div class="settings-title">⚙️ Cài đặt mốc cắt & cụm từ xóa</div>
-      <div class="drawer-note">Ấn nút cài đặt ở thanh trên để mở khung nổi chỉnh mốc.</div>
+  <div class="settings-head settings-glass-head">
+    <div class="settings-head-center">
+      <div class="settings-title">TOOL CẮT &amp; LÀM SẠCH TRUYỆN</div>
     </div>
     <button class="drawer-close" id="btnCloseSettings" type="button" aria-label="Đóng cài đặt">✕</button>
   </div>
-  <div class="settings-body">
-    <div class="settings-card">
-      <div class="detailsBody">
-        <div class="two">
-          <div class="field">
-            <label>Mốc bắt đầu mặc định (fallback nếu danh sách ưu tiên không khớp)</label>
-            <input id="startMarker" value="@Bạn đang đọc bản lưu trong hệ thống">
-          </div>
-          <div class="field">
-            <label>Mốc kết thúc mặc định (fallback nếu danh sách ưu tiên không khớp)</label>
-            <input id="endMarker" value="Chương trước">
-          </div>
+
+  <div class="settings-body settings-glass-body">
+    <div class="settings-card settings-main-card">
+      <h2>CÀI ĐẶT MỐC CẮT &amp; DỌN DẸP</h2>
+
+      <div class="settings-top-grid">
+        <div class="settings-field settings-short-field">
+          <label>Mốc bắt đầu mặc định</label>
+          <input id="startMarker" value="@Bạn đang đọc bản lưu trong hệ thống" placeholder="Mốc bắt đầu mặc định">
         </div>
 
-        <div class="two">
-          <div class="field">
-            <label>Giới hạn tối thiểu của chương</label>
-            <input id="chapterMinLimit" type="number" min="0" step="1" value="2000" inputmode="numeric">
-            <div class="small">Nhập 0 nếu muốn tắt chặn chương ngắn. Giá trị này sẽ tự lưu.</div>
-          </div>
-          <div class="field">
-            <label>Kiểu đếm giới hạn</label>
-            <select id="chapterMinUnit">
-              <option value="chars" selected>Ký tự</option>
-              <option value="words">Từ</option>
-            </select>
-            <div class="small">Chọn “Từ” nếu bạn muốn lọc theo số từ của chương.</div>
-          </div>
+        <div class="settings-field settings-short-field">
+          <label>Mốc kết thúc mặc định</label>
+          <input id="endMarker" value="Chương trước" placeholder="Mốc kết thúc mặc định">
         </div>
 
-        <div class="two">
-          <div class="field">
-            <label>Mốc bắt đầu theo thứ tự ưu tiên (mỗi dòng 1 mốc)</label>
-            <textarea id="startMarkersPriority" rows="6">@Bạn đang đọc bản lưu trong hệ thống
+        <div class="settings-field">
+          <label>Giới hạn tối thiểu của chương</label>
+          <input id="chapterMinLimit" type="number" min="0" step="1" value="300" inputmode="numeric">
+        </div>
+
+        <div class="settings-field">
+          <label>Kiểu đếm giới hạn</label>
+          <select id="chapterMinUnit" class="settings-segment-select">
+            <option value="chars" selected>Ký tự</option>
+            <option value="words">Từ</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-card settings-marker-card">
+      <h2>MỐC BẮT ĐẦU THEO THỨ TỰ ƯU TIÊN</h2>
+      <textarea id="startMarkersPriority" rows="5" placeholder="Nhập hoặc dán nội dung truyện vào đây...">@Bạn đang đọc bản lưu trong hệ thống
 @ Bạn đang đọc bản lưu trong hệ thống</textarea>
-            <div class="small">Tool sẽ xét từ trên xuống: gặp mốc nào trước trong danh sách thì dùng mốc đó.</div>
-          </div>
 
-          <div class="field">
-            <label>Mốc kết thúc theo thứ tự ưu tiên (mỗi dòng 1 mốc)</label>
-            <textarea id="endMarkersPriority" rows="6">Chương trước
+      <h2 class="settings-section-gap">MỐC KẾT THÚC THEO THỨ TỰ ƯU TIÊN</h2>
+      <textarea id="endMarkersPriority" rows="5" placeholder="Nhập hoặc dán nội dung truyện vào đây...">Chương trước
 Mục lục
 Chương sau</textarea>
-            <div class="small">Ví dụ: có "Chương trước" thì dừng ở đó; không có mới xét "Mục lục"... </div>
-          </div>
-        </div>
+    </div>
 
-        <div class="field">
-          <div class="small">✅ Các ô mốc bắt đầu / mốc kết thúc / giới hạn chương / cụm từ xóa thêm / tên file TXT / bật-tắt tự tăng số sẽ tự lưu trên trình duyệt (localStorage). Tải lại trang vẫn còn.</div>
-          <label>Cụm từ xóa thêm (mỗi dòng 1 cụm, áp dụng trong “Làm sạch 1 chạm” và “Xóa watermark phổ biến”)</label>
-          <textarea id="extraRemovePhrases" rows="12">Chương trước
+    <div class="settings-card settings-clean-card">
+      <h2>CỤM TỪ THƯỜNG GẶP CẦN XÓA</h2>
+      <textarea id="extraRemovePhrases" rows="9" placeholder="Nhập các cụm từ cần xóa, mỗi dòng một cụm...">Chương trước
 Mục lục
 Chương sau
 UUKANSHU đọc sách www.uukanshu.com
@@ -434,15 +1486,29 @@ uukanshu
 đổi mới nhanh nhất Chương mới nhất!
 ( Tấu chương xong )
 .!)"</textarea>
-        </div>
-              <div class="row" style="padding:0">
-          <button class="btn" type="button" id="btnSaveSettingsNow">Lưu cài đặt mốc ngay</button>
-          <button class="btn ghost" type="button" id="btnResetSavedSettings">Xóa cài đặt mốc đã lưu</button>
-        </div>
+
+      <div class="settings-actions-row">
+        <button class="btn settings-save-btn" type="button" id="btnSaveSettingsNow">💾 LƯU CÀI ĐẶT MỐC NGAY</button>
+        <button class="btn settings-reset-btn" type="button" id="btnResetSavedSettings">🗑 XÓA CÀI ĐẶT MỐC ĐÃ LƯU</button>
       </div>
     </div>
   </div>
 </section>
+
+<nav class="bottom-nav" id="bottomNav" aria-label="Thanh điều hướng dưới">
+  <button class="bottom-nav-item" id="bottomNavMerge" type="button" data-bottom-nav="merge" aria-label="Mở Gộp TXT">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.5"></rect><rect x="15" y="3" width="6" height="6" rx="1.5"></rect><rect x="3" y="15" width="6" height="6" rx="1.5"></rect><rect x="15" y="15" width="6" height="6" rx="1.5"></rect><path d="M10 6h3.5"></path><path d="m12.4 4.9 1.1 1.1-1.1 1.1"></path><path d="M14 18h-3.5"></path><path d="m11.6 16.9-1.1 1.1 1.1 1.1"></path></svg>
+    <span class="bottom-nav-label">Gộp</span>
+  </button>
+  <button class="bottom-nav-item active" id="bottomNavHome" type="button" data-bottom-nav="home" aria-label="Về Home">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10.5V20h13v-9.5"></path><path d="M9.5 20v-5h5v5"></path></svg>
+    <span class="bottom-nav-label">Home</span>
+  </button>
+  <button class="bottom-nav-item" id="bottomNavSettings" type="button" data-bottom-nav="settings" aria-label="Mở Cài Đặt">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.05.05a2.05 2.05 0 0 1-2.9 2.9l-.05-.05A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6V20a2 2 0 0 1-4 0v-.08a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.87.34l-.05.05a2.05 2.05 0 0 1-2.9-2.9l.05-.05A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1H4a2 2 0 0 1 0-4h.08a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.87l-.05-.05a2.05 2.05 0 0 1 2.9-2.9l.05.05A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6V4a2 2 0 0 1 4 0v.08a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.87-.34l.05-.05a2.05 2.05 0 0 1 2.9 2.9l-.05.05A1.7 1.7 0 0 0 19.4 9c.25.32.45.65.6 1H20a2 2 0 0 1 0 4h-.08a1.7 1.7 0 0 0-.52 1Z"></path></svg>
+    <span class="bottom-nav-label">Cài Đặt</span>
+  </button>
+</nav>
 
 <script>
 const els = {
@@ -458,37 +1524,29 @@ const els = {
   chapterMinLimit: document.getElementById('chapterMinLimit'),
   chapterMinUnit: document.getElementById('chapterMinUnit'),
   extraRemovePhrases: document.getElementById('extraRemovePhrases'),
-  fileInput: document.getElementById('fileInput'),
-  dropZone: document.getElementById('dropZone'),
-  btnExtract: document.getElementById('btnExtract'),
-  btnOneClick: document.getElementById('btnOneClick'),
   btnCopy: document.getElementById('btnCopy'),
   btnDownloadTxt: document.getElementById('btnDownloadTxt'),
-  btnSwap: document.getElementById('btnSwap'),
   btnClearAll: document.getElementById('btnClearAll'),
-  btnPaste: document.getElementById('btnPaste'),
-  btnTrimInput: document.getElementById('btnTrimInput'),
-  btnNormalize: document.getElementById('btnNormalize'),
-  btnSelectOutput: document.getElementById('btnSelectOutput'),
-  btnRemoveBlankLines: document.getElementById('btnRemoveBlankLines'),
-  btnRemoveWatermark: document.getElementById('btnRemoveWatermark'),
   btnSaveSettingsNow: document.getElementById('btnSaveSettingsNow'),
   btnResetSavedSettings: document.getElementById('btnResetSavedSettings'),
   btnAutoPasteDownload: document.getElementById('btnAutoPasteDownload'),
   txtFileName: document.getElementById('txtFileName'),
   autoIncrementName: document.getElementById('autoIncrementName'),
+  btnToggleAutoIncrement: document.getElementById('btnToggleAutoIncrement'),
   btnResetNameCounter: document.getElementById('btnResetNameCounter'),
-  btnToggleDuplicateMemory: document.getElementById('btnToggleDuplicateMemory')
+  btnToggleDuplicateMemory: document.getElementById('btnToggleDuplicateMemory'),
+  bottomNav: document.getElementById('bottomNav'),
+  bottomNavMerge: document.getElementById('bottomNavMerge'),
+  bottomNavHome: document.getElementById('bottomNavHome'),
+  bottomNavSettings: document.getElementById('bottomNavSettings')
 
 };
 
 // ===== refs: panel 3 gạch / multi TXT (v11) =====
 Object.assign(els, {
-  btnOpenDrawer: document.getElementById('btnOpenDrawer'),
   btnCloseDrawer: document.getElementById('btnCloseDrawer'),
   drawerPanel: document.getElementById('drawerPanel'),
   drawerBackdrop: document.getElementById('drawerBackdrop'),
-  btnOpenSettings: document.getElementById('btnOpenSettings'),
   btnCloseSettings: document.getElementById('btnCloseSettings'),
   settingsModal: document.getElementById('settingsModal'),
   settingsBackdrop: document.getElementById('settingsBackdrop'),
@@ -502,13 +1560,32 @@ Object.assign(els, {
   multiTxtBatchInfo: document.getElementById('multiTxtBatchInfo'),
   multiTxtTextarea: document.getElementById('multiTxtTextarea'),
   multiTxtMeta: document.getElementById('multiTxtMeta'),
-  btnCopyPanelTxt: document.getElementById('btnCopyPanelTxt'),
   btnClearPanelTxt: document.getElementById('btnClearPanelTxt')
 });
 
 // ===== localStorage: lưu cài đặt mốc / cụm từ xóa thêm =====
 const STORAGE_KEY = 'tool_cat_doan_truyen_settings_v8';
-const FILE_COUNTER_MAP_KEY = 'tool_cat_doan_truyen_filename_counters_v8';
+const STORY_COUNTER_MAP_KEY = 'story_file_counters_v1';
+
+function loadStoryCounterMap(){
+  try{
+    const raw = localStorage.getItem(STORY_COUNTER_MAP_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    return (data && typeof data === 'object' && !Array.isArray(data)) ? data : {};
+  }catch(e){
+    return {};
+  }
+}
+
+function saveStoryCounterMap(map){
+  try{
+    localStorage.setItem(STORY_COUNTER_MAP_KEY, JSON.stringify(map || {}));
+  }catch(e){}
+}
+
+function getStoryId(){
+  return '1';
+}
 
 function getSettingsFields(){
   return ['startMarker','endMarker','startMarkersPriority','endMarkersPriority','chapterMinLimit','chapterMinUnit','extraRemovePhrases','txtFileName','autoIncrementName'];
@@ -560,22 +1637,6 @@ function bindAutoSaveSettings(){
   }
 }
 
-function loadFileCounterMap(){
-  try{
-    const raw = localStorage.getItem(FILE_COUNTER_MAP_KEY);
-    const data = raw ? JSON.parse(raw) : {};
-    return (data && typeof data === 'object') ? data : {};
-  }catch(err){
-    return {};
-  }
-}
-
-function saveFileCounterMap(map){
-  try{
-    localStorage.setItem(FILE_COUNTER_MAP_KEY, JSON.stringify(map || {}));
-  }catch(err){}
-}
-
 function splitFileNameParts(fileName){
   const m = String(fileName || '').match(/^(.*?)(\.[^.]+)?$/);
   return {
@@ -597,7 +1658,9 @@ function makeMainDownloadFileName(name){
   return sanitizeMainFileBaseName(name) + '.txt';
 }
 
-// Tự tăng: truyenchu.txt -> truyenchu1.txt -> truyenchu2.txt...
+// Tự tăng theo từng ID truyện:
+// - truyenchu.txt -> truyenchu1.txt -> truyenchu2.txt...
+// - truyenchu70.txt -> truyenchu70.txt, truyenchu71.txt...
 function getAutoIncrementFileName(fileName){
   const p = splitFileNameParts(fileName);
 
@@ -610,21 +1673,23 @@ function getAutoIncrementFileName(fileName){
     startNum = parseInt(match[2], 10) || 0;
   }
 
-  const key = (baseStem + p.ext).toLowerCase();
-  const map = loadFileCounterMap();
+  const storyId = getStoryId();
+  const map = loadStoryCounterMap();
+  if (!map[storyId] || typeof map[storyId] !== 'object' || Array.isArray(map[storyId])) map[storyId] = {};
 
-  if (!(key in map)){
-    map[key] = (startNum > 0) ? (startNum - 1) : 0;
+  const key = (baseStem + p.ext).toLowerCase();
+  if (!(key in map[storyId])){
+    map[storyId][key] = (startNum > 0) ? (startNum - 1) : 0;
   }
 
-  map[key] = Number(map[key]) + 1;
-  saveFileCounterMap(map);
+  map[storyId][key] = Number(map[storyId][key]) + 1;
+  saveStoryCounterMap(map);
 
   return {
-    fileName: `${baseStem}${map[key]}${p.ext}`,
+    fileName: `${baseStem}${map[storyId][key]}${p.ext}`,
     baseStem,
     ext: p.ext,
-    count: map[key],
+    count: map[storyId][key],
     key
   };
 }
@@ -639,19 +1704,36 @@ function resetCurrentFileCounter(){
     if (!baseStem) baseStem = p.stem || 'chuong_sach';
     const key = (baseStem + p.ext).toLowerCase();
 
-    const map = loadFileCounterMap();
-    delete map[key];
-    saveFileCounterMap(map);
+    const storyId = getStoryId();
+    const map = loadStoryCounterMap();
+    if (map[storyId] && typeof map[storyId] === 'object') delete map[storyId][key];
+    saveStoryCounterMap(map);
 
     if (els.txtFileName){
       els.txtFileName.value = baseStem;
       try { saveSettingsToLocal(); } catch(e) {}
     }
 
-    setStatus(`✅ Đã reset số tự tăng. Lần tải tiếp sẽ dùng lại tên cũ từ: <b>${baseStem}1.txt</b>`, 'ok');
+    setStatus(`✅ Đã reset số tự tăng của truyện ID <b>${storyId}</b>. Lần tải tiếp sẽ dùng lại từ: <b>${baseStem}1.txt</b>`, 'ok');
   }catch(err){
     setStatus('⚠️ Không reset được số tự tăng.', 'warn');
   }
+}
+
+function resetStoryCounter(){
+  const storyId = getStoryId();
+  const map = loadStoryCounterMap();
+  if (map[storyId]) delete map[storyId];
+  saveStoryCounterMap(map);
+  clearDownloadedChapterHashesForStory(storyId);
+  setStatus(`✅ Đã reset truyện ID = <b>${storyId}</b> về 1 và xóa danh sách chương đã nhớ để chống trùng.`, 'ok');
+}
+
+function resetRememberedChapters(){
+  const storyId = getDuplicateStoryId();
+  clearDownloadedChapterHashesForStory(storyId);
+  try{ __lastAutoClipboardHash = ''; }catch(e){}
+  setStatus(`✅ Đã reset ghi nhớ chống trùng của truyện ID = <b>${storyId}</b>. Giờ copy lại chương cũ sẽ xử lý lại được.`, 'ok');
 }
 
 function resetSavedSettings(){
@@ -716,21 +1798,40 @@ function showInputFromTop(focusInput=false){
   }, 0);
 }
 function escapeRegExp(str){ return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function escapeHtml(str){ return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;'); }
 function parseLines(value){
   return normalizeNewlines(value).split('\n').map(s=>s.trim()).filter(Boolean);
 }
-function markerToRegex(marker){
+function markerToRegex(marker, kind='start'){
   const m = String(marker || '').trim();
   if (!m) return null;
   const lower = m.toLowerCase();
+
   if (lower === '@bạn đang đọc bản lưu trong hệ thống' || lower === '@ bạn đang đọc bản lưu trong hệ thống'){
     return /@\s*Bạn đang đọc bản lưu trong hệ thống/i;
   }
+
+  // Sửa lỗi quan trọng:
+  // Mốc kết thúc "Chương trước" không được bắt nhầm cụm "chương Trước khi..."
+  // trong tiêu đề chương kiểu: "Thứ 54 chương Trước khi chiến đấu...".
+  // Vì vậy các mốc điều hướng phải đứng riêng một dòng hoặc nằm trong cụm nav.
+  if (kind === 'end'){
+    if (/^chương\s*trước$/i.test(m)){
+      return /(?:^|\n)\s*Chương\s*trước\s*(?=$|\n|Mục\s*lục|Chương\s*sau)/i;
+    }
+    if (/^mục\s*lục$/i.test(m)){
+      return /(?:^|\n|Chương\s*trước)\s*Mục\s*lục\s*(?=$|\n|Chương\s*sau)/i;
+    }
+    if (/^chương\s*sau$/i.test(m)){
+      return /(?:^|\n|Mục\s*lục|Chương\s*trước)\s*Chương\s*sau\s*(?=$|\n)/i;
+    }
+  }
+
   return new RegExp(escapeRegExp(m), 'i');
 }
 function findMarkerByPriority(text, markers, fallbackMarker, kind='start'){
   for (const marker of (markers || [])){
-    const re = markerToRegex(marker);
+    const re = markerToRegex(marker, kind);
     if (!re) continue;
     const match = re.exec(text);
     if (match){
@@ -738,7 +1839,7 @@ function findMarkerByPriority(text, markers, fallbackMarker, kind='start'){
     }
   }
   if (fallbackMarker && String(fallbackMarker).trim()){
-    const re = markerToRegex(String(fallbackMarker).trim());
+    const re = markerToRegex(String(fallbackMarker).trim(), kind);
     if (re){
       const match = re.exec(text);
       if (match){
@@ -851,30 +1952,9 @@ function getChapterLimitWarningText(){
 
 // Cụm này chỉ dùng để nhận diện trang không phải chương ở PHẦN TRƯỚC mốc bắt đầu.
 // Nếu cụm này nằm trong nội dung đã cắt từ mốc bắt đầu → mốc kết thúc thì vẫn giữ chương.
-const NON_CHAPTER_KEYWORDS = [
-  'lên khung cảm nghĩ',
-  'lên khung cẩn nghĩ'
-];
-
-const NON_CHAPTER_PATTERNS = [
+const ALWAYS_REJECT_PATTERNS = [
   /len\s+khung\s+(cam|can)\s+nghi/i
 ];
-
-// Chặn tuyệt đối chỉ áp dụng cho vùng trước mốc bắt đầu, không áp dụng cho nội dung chương.
-const ALWAYS_REJECT_PATTERNS = NON_CHAPTER_PATTERNS;
-
-const CHAPTER_TITLE_PATTERNS = [
-  /(^|\n)\s*(chương|chapter|chap|quyển)\s*(\d+|[ivxlcdm]+)\b/i,
-  /(^|\n)\s*第\s*\d+\s*章/i
-];
-
-function normalizeTextForCheck(text){
-  return String(text || '')
-    .normalize('NFC')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 function normalizeTextForSignal(text){
   return String(text || '')
@@ -922,16 +2002,6 @@ function hasNonChapterTitleNearTop(rawText){
 
 function hasAlwaysRejectSignalInRawText(rawText){
   return hasNonChapterTitleNearTop(rawText);
-}
-
-function isLikelyNonChapter(text){
-  // Không chặn theo "lên khung cảm nghĩ" trong nội dung chương đã cắt.
-  return false;
-}
-
-function hasChapterStructure(text){
-  const t = String(text || '');
-  return CHAPTER_TITLE_PATTERNS.some(re => re.test(t));
 }
 
 function clearAllOnReject(message){
@@ -1069,18 +2139,42 @@ function isDuplicateMemoryEnabled(){
   return __duplicateMemoryEnabled !== false;
 }
 
+function renderHomeSwitchButton(btn, label, enabled){
+  if (!btn) return;
+  const state = enabled ? 'BẬT' : 'TẮT';
+  btn.classList.toggle('auto-on', !!enabled);
+  btn.innerHTML = `<span class="switch-label">${label}</span><span class="switch-pill"><span class="switch-state">${state}</span><span class="switch-knob"></span></span>`;
+}
+
 function updateDuplicateMemoryButton(){
   const btn = els.btnToggleDuplicateMemory || document.getElementById('btnToggleDuplicateMemory');
   if (!btn) return;
-  if (isDuplicateMemoryEnabled()){
-    btn.textContent = 'Ghi nhớ trùng: BẬT';
-    btn.classList.add('auto-on');
-    btn.title = 'Đang bật: chương đã tải sẽ được ghi nhớ và không tải trùng.';
-  }else{
-    btn.textContent = 'Ghi nhớ trùng: TẮT';
-    btn.classList.remove('auto-on');
-    btn.title = 'Đang tắt: cho phép tải lại chương cũ, không ghi nhớ chống trùng.';
-  }
+  renderHomeSwitchButton(btn, 'Ghi nhớ trùng:', isDuplicateMemoryEnabled());
+  btn.title = isDuplicateMemoryEnabled()
+    ? 'Đang bật: chương đã tải sẽ được ghi nhớ và không tải trùng.'
+    : 'Đang tắt: cho phép tải lại chương cũ, không ghi nhớ chống trùng.';
+}
+
+function updateAutoIncrementButton(){
+  const btn = els.btnToggleAutoIncrement || document.getElementById('btnToggleAutoIncrement');
+  const checkbox = els.autoIncrementName || document.getElementById('autoIncrementName');
+  if (!btn || !checkbox) return;
+  const enabled = !!checkbox.checked;
+  renderHomeSwitchButton(btn, 'Tự tăng số:', enabled);
+  btn.title = enabled
+    ? 'Đang bật: sau mỗi lần tải, ô nhập số chương sẽ tự tăng tên kế tiếp.'
+    : 'Đang tắt: tải nhiều lần vẫn giữ nguyên tên hiện tại.';
+}
+
+function toggleAutoIncrement(){
+  const checkbox = els.autoIncrementName || document.getElementById('autoIncrementName');
+  if (!checkbox) return;
+  checkbox.checked = !checkbox.checked;
+  try { saveSettingsToLocal(); } catch(e) {}
+  updateAutoIncrementButton();
+  setStatus(checkbox.checked
+    ? '✅ Đã BẬT tự tăng số file sau khi tải.'
+    : '⚠️ Đã TẮT tự tăng số file. Tải tiếp sẽ giữ nguyên tên đang nhập.', checkbox.checked ? 'ok' : 'warn');
 }
 
 function toggleDuplicateMemory(){
@@ -1131,15 +2225,7 @@ function normalizeChapterTextForDuplicateCheck(text){
 }
 
 function getDuplicateStoryId(){
-  try{
-    if (typeof getStoryId === 'function') return String(getStoryId() || '1').trim() || '1';
-  }catch(e){}
-  try{
-    const el = document.getElementById('storyId');
-    return el ? (String(el.value).trim() || '1') : '1';
-  }catch(e){
-    return '1';
-  }
+  return '1';
 }
 
 function loadDownloadedHashMap(){
@@ -1309,7 +2395,52 @@ async function pasteInput(){
   }catch{ setStatus('⚠️ Trình duyệt chặn đọc clipboard. Hãy dán thủ công.', 'warn'); }
 }
 
-const AUTO_PASTE_DOWNLOAD_ENABLED_KEY = 'tool_auto_paste_download_enabled_v1';
+// Tự làm sạch khi người dùng dán trực tiếp vào ô "Văn bản gốc".
+// Lý do: Android/content:// đôi khi không bắn đúng sự kiện clipboard toàn trang,
+// nên phải bắt trực tiếp trên textarea + input fallback.
+let __inputAutoCleanTimer = null;
+let __inputAutoCleanLastHash = '';
+
+function scheduleInputAutoClean(reason='paste'){
+  if (!els.input) return;
+  if (__inputAutoCleanTimer) clearTimeout(__inputAutoCleanTimer);
+  const delay = reason === 'paste' ? 450 : 650;
+  __inputAutoCleanTimer = setTimeout(() => runInputAutoClean(reason), delay);
+}
+
+function runInputAutoClean(reason='paste'){
+  if (!els.input) return;
+
+  const raw = String(els.input.value || '');
+  if (!raw.trim()){
+    if (els.output) els.output.value = '';
+    updateStats();
+    return;
+  }
+
+  const hash = simpleTextHash(normalizeNewlines(raw).trim());
+  if (hash === __inputAutoCleanLastHash && els.output && String(els.output.value || '').trim()){
+    updateStats();
+    return;
+  }
+  __inputAutoCleanLastHash = hash;
+
+  const beforeInput = raw;
+  const beforeOutput = els.output ? String(els.output.value || '') : '';
+  runOneClickClean();
+
+  if (els.output && String(els.output.value || '').trim()){
+    setStatus('✅ Đã tự làm sạch sau khi dán.', 'ok');
+  }else if (!String(els.input.value || '').trim() && beforeInput.length > 800){
+    // Nếu auto-clean bị lọc quá sớm do mốc/độ dài, khôi phục lại input để người dùng không mất chương.
+    els.input.value = beforeInput;
+    if (els.output) els.output.value = beforeOutput;
+    updateStats();
+    setStatus('⚠️ Chưa tách được chương. Đã giữ nguyên văn bản gốc để bạn kiểm tra mốc cắt.', 'warn');
+  }
+}
+
+const AUTO_PASTE_DOWNLOAD_ENABLED_KEY = 'tool_auto_paste_download_enabled_v2';
 let __autoPasteDownloadOn = false;
 let __autoPasteDownloadTimer = null;
 let __autoPasteDownloadBusy = false;
@@ -1319,10 +2450,10 @@ let __lastAutoClipboardWarnAt = 0;
 function loadAutoPasteDownloadEnabled(){
   try{
     const saved = localStorage.getItem(AUTO_PASTE_DOWNLOAD_ENABLED_KEY);
-    // Mặc định luôn bật. Chỉ khi người dùng bấm Tắt thì mới lưu false.
-    return saved === null ? true : saved === 'true';
+    // Mặc định TẮT để giống giao diện mẫu; người dùng bật thì trạng thái sẽ được nhớ.
+    return saved === null ? false : saved === 'true';
   }catch(err){
-    return true;
+    return false;
   }
 }
 function saveAutoPasteDownloadEnabled(enabled){
@@ -1354,8 +2485,7 @@ async function clearClipboardAfterAutoDownload(){
 
 function updateAutoPasteDownloadButton(){
   if (!els.btnAutoPasteDownload) return;
-  els.btnAutoPasteDownload.textContent = __autoPasteDownloadOn ? 'Tắt tự dán & tải' : 'Bật tự dán & tải';
-  els.btnAutoPasteDownload.classList.toggle('auto-on', __autoPasteDownloadOn);
+  renderHomeSwitchButton(els.btnAutoPasteDownload, 'Tự dán & tải:', __autoPasteDownloadOn);
 }
 
 function stopAutoPasteDownload(showMsg=true){
@@ -1462,33 +2592,94 @@ function toggleAutoPasteDownload(){
   else startAutoPasteDownload();
 }
 
+// ===== Bottom navigation: Gộp / Home / Cài Đặt =====
+function updateBottomNavViewport(){
+  const root = document.documentElement;
+  const nav = els.bottomNav || document.getElementById('bottomNav');
+  if (!root || !nav) return;
+
+  let width = window.innerWidth || document.documentElement.clientWidth || 360;
+  let left = width / 2;
+  let bottom = 10;
+
+  try{
+    if (window.visualViewport){
+      const vv = window.visualViewport;
+      width = Math.max(280, vv.width || width);
+      left = (vv.offsetLeft || 0) + width / 2;
+      const hiddenBottom = Math.max(0, (window.innerHeight || width) - (vv.height || 0) - (vv.offsetTop || 0));
+      bottom = hiddenBottom + 10;
+    }
+  }catch(e){}
+
+  root.style.setProperty('--bottom-nav-width', Math.max(260, width - 20) + 'px');
+  root.style.setProperty('--bottom-nav-left', left + 'px');
+  root.style.setProperty('--bottom-nav-visible-bottom', `calc(${bottom}px + env(safe-area-inset-bottom))`);
+}
+
+function setBottomNavActive(name='home'){
+  const map = {
+    merge: els.bottomNavMerge,
+    home: els.bottomNavHome,
+    settings: els.bottomNavSettings
+  };
+  Object.keys(map).forEach(key => {
+    const btn = map[key];
+    if (!btn) return;
+    const active = key === name;
+    btn.classList.toggle('active', active);
+    if (active) btn.setAttribute('aria-current', 'page');
+    else btn.removeAttribute('aria-current');
+  });
+}
+
+function setAppSpace(name='home', scrollTop=true){
+  const safeName = ['merge','home','settings'].includes(name) ? name : 'home';
+
+  try{ document.body.setAttribute('data-space', safeName); }catch(e){}
+
+  if (els.drawerPanel){
+    els.drawerPanel.classList.remove('show');
+    els.drawerPanel.setAttribute('aria-hidden', safeName === 'merge' ? 'false' : 'true');
+  }
+  if (els.drawerBackdrop) els.drawerBackdrop.classList.remove('show');
+
+  if (els.settingsModal){
+    els.settingsModal.classList.remove('show');
+    els.settingsModal.setAttribute('aria-hidden', safeName === 'settings' ? 'false' : 'true');
+  }
+  if (els.settingsBackdrop) els.settingsBackdrop.classList.remove('show');
+
+  setBottomNavActive(safeName);
+  updateBottomNavViewport();
+
+  if (scrollTop){
+    try{ window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    catch(e){ window.scrollTo(0, 0); }
+  }
+}
+
+function goHomeFromBottomNav(){
+  setAppSpace('home', true);
+  setStatus('🏠 Đã về Home.', 'ok');
+}
+// ===== End bottom navigation =====
+
 // ===== Panel 3 gạch: mở nhiều TXT + ô văn bản TXT =====
 let __multiTxtPickedFiles = [];
 
 function openDrawerPanel(){
-  if (!els.drawerPanel || !els.drawerBackdrop) return;
-  els.drawerPanel.classList.add('show');
-  els.drawerBackdrop.classList.add('show');
-  els.drawerPanel.setAttribute('aria-hidden', 'false');
+  setAppSpace('merge', true);
 }
-function closeDrawerPanel(){
-  if (!els.drawerPanel || !els.drawerBackdrop) return;
-  els.drawerPanel.classList.remove('show');
-  els.drawerBackdrop.classList.remove('show');
-  els.drawerPanel.setAttribute('aria-hidden', 'true');
+function closeDrawerPanel(updateNav=true){
+  setAppSpace(updateNav ? 'home' : 'home', false);
 }
 
 function openSettingsModal(){
-  if (!els.settingsModal || !els.settingsBackdrop) return;
-  els.settingsModal.classList.add('show');
-  els.settingsBackdrop.classList.add('show');
-  els.settingsModal.setAttribute('aria-hidden', 'false');
+  setAppSpace('settings', true);
 }
-function closeSettingsModal(){
-  if (!els.settingsModal || !els.settingsBackdrop) return;
-  els.settingsModal.classList.remove('show');
-  els.settingsBackdrop.classList.remove('show');
-  els.settingsModal.setAttribute('aria-hidden', 'true');
+function closeSettingsModal(updateNav=true){
+  setAppSpace(updateNav ? 'home' : 'home', false);
 }
 
 function loadMultiBatchState(){
@@ -1530,7 +2721,7 @@ function resetMultiFileName(){
   }
 }
 function getMultiBatchSize(){
-  const n = parseInt((els.multiTxtBatchSize && els.multiTxtBatchSize.value) || '60', 10);
+  const n = parseInt((els.multiTxtBatchSize && els.multiTxtBatchSize.value) || '50', 10);
   return Number.isFinite(n) && n > 0 ? n : 60;
 }
 function getBatchNoFromStart(start, batchSize){
@@ -1638,12 +2829,17 @@ function renderMultiTxtFileList(){
     updateMultiTxtMeta();
     return;
   }
-  els.multiTxtFileList.innerHTML = __multiTxtPickedFiles.map((f, idx) => {
-    const size = Number(f.size || 0).toLocaleString('vi-VN');
-    const meta = f.__chapterInfo && f.__chapterInfo.hasChapter
-      ? ` • ${f.__chapterInfo.storyKey} / c${f.__chapterInfo.chapterNo}`
-      : '';
-    return `<div class="item">${idx+1}. <b>${f.name}</b>${meta} • ${size} byte</div>`;
+  const formatChars = (n) => Number(n || 0).toLocaleString('vi-VN') + ' ký tự';
+  const formatSizeShort = (bytes) => {
+    const b = Number(bytes || 0);
+    if (!b) return '0 KB';
+    if (b >= 1024 * 1024) return (b / (1024 * 1024)).toFixed(1) + ' MB';
+    return Math.max(1, Math.round(b / 1024)) + ' KB';
+  };
+  els.multiTxtFileList.innerHTML = __multiTxtPickedFiles.map((f) => {
+    const charText = formatChars(f.__charCount || 0);
+    const sizeText = formatSizeShort(f.size || 0);
+    return `<div class="merge-file-row"><div class="merge-file-name"><span class="merge-file-icon">📄</span><span class="merge-file-text">${escapeHtml(f.name || 'chapter.txt')}</span></div><div class="merge-file-meta">${charText}</div><div class="merge-file-size">${sizeText}</div></div>`;
   }).join('');
   if (els.multiTxtBatchInfo){
     els.multiTxtBatchInfo.textContent = __multiTxtLastBatchSummary.length
@@ -1781,7 +2977,9 @@ async function handleMultiTxtSelect(fileList){
   for (const file of txtFiles){
     try{
       const content = await readTxtFileAsText(file);
-      chunks.push(normalizeNewlines(content).trim());
+      const normalizedContent = normalizeNewlines(content).trim();
+      try{ file.__charCount = normalizedContent.length; }catch(e){}
+      chunks.push(normalizedContent);
       okCount++;
     }catch(err){
       chunks.push('');
@@ -1793,6 +2991,7 @@ async function handleMultiTxtSelect(fileList){
     els.multiTxtTextarea.value = merged;
     updateMultiTxtMeta();
   }
+  renderMultiTxtFileList();
 
   if (els.multiTxtFileName){
     els.multiTxtFileName.value = `tap_${__multiTxtCurrentBatchNo}.txt`;
@@ -1893,35 +3092,33 @@ function openTextFile(file){
   reader.readAsText(file, 'utf-8');
 }
 
-els.btnExtract.addEventListener('click', runExtract);
-els.btnOneClick.addEventListener('click', runOneClickClean);
-els.btnCopy.addEventListener('click', copyOutput);
-// els.btnDownloadTxt.addEventListener('click', downloadTxt);
-els.btnSwap.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để đưa lên ô trên.', 'warn');return;} els.input.value=els.output.value; els.output.value=''; showInputFromTop(); updateStats(); setStatus('✅ Đã đưa kết quả lên ô trên.', 'ok'); });
-els.btnClearAll.addEventListener('click', ()=>{ els.input.value=''; els.output.value=''; showInputFromTop(); updateStats(); setStatus('🧹 Đã xóa toàn bộ nội dung.', ''); });
-els.btnPaste.addEventListener('click', pasteInput);
-els.btnTrimInput.addEventListener('click', ()=>{ els.input.value = els.input.value.trim(); showInputFromTop(); updateStats(); setStatus('✅ Đã xóa khoảng trắng đầu/cuối input.', 'ok'); });
-els.btnNormalize.addEventListener('click', ()=>{ els.input.value = normalizeNewlines(els.input.value); showInputFromTop(); updateStats(); setStatus('✅ Đã chuẩn hóa xuống dòng.', 'ok'); });
-els.btnSelectOutput.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để chọn.', 'warn');return;} els.output.removeAttribute('readonly'); els.output.focus(); els.output.select(); els.output.setAttribute('readonly',''); setStatus('✅ Đã chọn toàn bộ kết quả.', 'ok'); });
-els.btnRemoveBlankLines.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để xử lý.', 'warn');return;} els.output.value = els.output.value.replace(/\n{3,}/g,'\n\n').trim(); updateStats(); setStatus('✅ Đã gộp dòng trống dư.', 'ok'); });
-els.btnRemoveWatermark.addEventListener('click', ()=>{ if(!els.output.value){setStatus('⚠️ Chưa có kết quả để xử lý.', 'warn');return;} els.output.value = removeCommonNoise(els.output.value); updateStats(); setStatus('✅ Đã xóa watermark phổ biến + cụm từ xóa thêm.', 'ok'); });
+if (els.btnCopy) els.btnCopy.addEventListener('click', copyOutput);
+if (els.btnDownloadTxt) els.btnDownloadTxt.addEventListener('click', downloadTxt);
+if (els.btnClearAll) els.btnClearAll.addEventListener('click', ()=>{ els.input.value=''; els.output.value=''; __inputAutoCleanLastHash=''; showInputFromTop(); updateStats(); setStatus('🧹 Đã xóa toàn bộ nội dung.', ''); });
 
-els.fileInput.addEventListener('change', e => { const file = e.target.files && e.target.files[0]; if(file) openTextFile(file); e.target.value=''; });
-['dragenter','dragover'].forEach(evt => els.dropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); els.dropZone.classList.add('drag'); }));
-['dragleave','drop'].forEach(evt => els.dropZone.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); els.dropZone.classList.remove('drag'); }));
-els.dropZone.addEventListener('drop', e => {
-  const file = e.dataTransfer.files && e.dataTransfer.files[0];
-  if (!file) return;
-  if (!/\.txt$/i.test(file.name) && file.type !== 'text/plain'){ setStatus('⚠️ Vui lòng thả file .txt', 'warn'); return; }
-  openTextFile(file);
-});
+const btnHomeInputClear = document.getElementById('btnHomeInputClear');
+if (btnHomeInputClear) btnHomeInputClear.addEventListener('click', ()=>{ if (els.btnClearAll) els.btnClearAll.click(); });
+const btnHomeOutputCopy = document.getElementById('btnHomeOutputCopy');
+if (btnHomeOutputCopy) btnHomeOutputCopy.addEventListener('click', ()=>{ if (els.btnCopy) els.btnCopy.click(); });
 
-if (els.btnOpenDrawer) els.btnOpenDrawer.addEventListener('click', openDrawerPanel);
 if (els.btnCloseDrawer) els.btnCloseDrawer.addEventListener('click', closeDrawerPanel);
 if (els.drawerBackdrop) els.drawerBackdrop.addEventListener('click', closeDrawerPanel);
-if (els.btnOpenSettings) els.btnOpenSettings.addEventListener('click', openSettingsModal);
 if (els.btnCloseSettings) els.btnCloseSettings.addEventListener('click', closeSettingsModal);
 if (els.settingsBackdrop) els.settingsBackdrop.addEventListener('click', closeSettingsModal);
+if (els.bottomNavMerge) els.bottomNavMerge.addEventListener('click', openDrawerPanel);
+if (els.bottomNavHome) els.bottomNavHome.addEventListener('click', goHomeFromBottomNav);
+if (els.bottomNavSettings) els.bottomNavSettings.addEventListener('click', openSettingsModal);
+updateBottomNavViewport();
+window.addEventListener('resize', updateBottomNavViewport, {passive:true});
+window.addEventListener('orientationchange', () => setTimeout(updateBottomNavViewport, 80), {passive:true});
+window.addEventListener('scroll', updateBottomNavViewport, {passive:true});
+if (window.visualViewport){
+  window.visualViewport.addEventListener('resize', updateBottomNavViewport, {passive:true});
+  window.visualViewport.addEventListener('scroll', updateBottomNavViewport, {passive:true});
+}
+setTimeout(updateBottomNavViewport, 50);
+setTimeout(updateBottomNavViewport, 350);
+setAppSpace('home', false);
 if (els.btnAutoPasteDownload) els.btnAutoPasteDownload.addEventListener('click', toggleAutoPasteDownload);
 window.addEventListener('focus', triggerAutoClipboardCheckFast);
 window.addEventListener('pageshow', triggerAutoClipboardCheckFast);
@@ -1933,6 +3130,10 @@ document.addEventListener('pointerdown', (e) => {
   if (!isEditableElement(e.target)) blurEditableElement();
 }, {capture:true, passive:true});
 document.addEventListener('paste', (e) => {
+  // Nếu đang dán trực tiếp vào ô Văn bản gốc thì để textarea nhận nội dung,
+  // sau đó input-specific paste listener sẽ tự làm sạch. Không ép tải ở đây.
+  if (els.input && e.target === els.input) return;
+
   if (!__autoPasteDownloadOn) return;
   const txt = e.clipboardData ? e.clipboardData.getData('text/plain') : '';
   if (txt){
@@ -1941,8 +3142,8 @@ document.addEventListener('paste', (e) => {
   }
 });
 
-// Mặc định luôn bật tự dán & tải khi mở web.
-// Nếu người dùng bấm Tắt, trạng thái tắt sẽ được nhớ lại.
+// Mặc định tắt tự dán & tải để tránh tự tải ngoài ý muốn.
+// Nếu người dùng bấm Bật, trạng thái bật sẽ được nhớ lại.
 if (loadAutoPasteDownloadEnabled()){
   startAutoPasteDownload(false);
 }else{
@@ -1961,24 +3162,48 @@ if (els.multiTxtFolderInput){
     e.target.value = '';
   });
 }
-if (els.btnCopyPanelTxt) els.btnCopyPanelTxt.addEventListener('click', copyPanelTxt);
 if (els.btnClearPanelTxt) els.btnClearPanelTxt.addEventListener('click', clearPanelTxt);
+if (document.getElementById('btnCopyPanelTxtBottom')) document.getElementById('btnCopyPanelTxtBottom').addEventListener('click', copyPanelTxt);
+if (document.getElementById('btnDownloadPanelTxtBottom')) document.getElementById('btnDownloadPanelTxtBottom').addEventListener('click', downloadPanelTxt);
 if (els.btnResetMultiBatch) els.btnResetMultiBatch.addEventListener('click', resetMultiBatchState);
 if (document.getElementById('btnResetMultiFileName')) document.getElementById('btnResetMultiFileName').addEventListener('click', resetMultiFileName);
 if (els.multiTxtTextarea) els.multiTxtTextarea.addEventListener('input', updateMultiTxtMeta);
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape'){
-    closeDrawerPanel();
-    closeSettingsModal();
+    setAppSpace('home', false);
   }
-  if (e.ctrlKey && e.key === 'Enter'){ e.preventDefault(); runExtract(); }
-  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l'){ e.preventDefault(); runOneClickClean(); }
 });
 
-els.input.addEventListener('input', updateStats);
-els.input.addEventListener('paste', () => { setTimeout(() => showInputFromTop(), 0); });
-els.output.addEventListener('input', updateStats);
+let __lastInputLengthForAutoClean = els.input ? String(els.input.value || '').length : 0;
+if (els.input){
+  els.input.addEventListener('input', (e) => {
+    updateStats();
+
+    const currentLength = String(els.input.value || '').length;
+    const grewBy = currentLength - __lastInputLengthForAutoClean;
+    __lastInputLengthForAutoClean = currentLength;
+
+    const inputType = String(e.inputType || '').toLowerCase();
+    const looksLikePaste =
+      inputType.includes('paste') ||
+      inputType.includes('drop') ||
+      grewBy > 80;
+
+    if (looksLikePaste || currentLength > 500){
+      scheduleInputAutoClean(looksLikePaste ? 'paste' : 'input');
+    }
+  });
+
+  els.input.addEventListener('paste', () => {
+    setTimeout(() => {
+      showInputFromTop();
+      __lastInputLengthForAutoClean = String(els.input.value || '').length;
+      scheduleInputAutoClean('paste');
+    }, 120);
+  });
+}
+if (els.output) els.output.addEventListener('input', updateStats);
 
 // Khôi phục cài đặt mốc đã lưu (nếu có) + tự động lưu khi người dùng chỉnh
 const __restoredSettings = loadSettingsFromLocal();
@@ -1996,14 +3221,25 @@ if (els.btnResetSavedSettings){
 if (els.btnResetNameCounter){
   els.btnResetNameCounter.addEventListener('click', resetCurrentFileCounter);
 }
+if (document.getElementById('btnResetRemember')){
+  document.getElementById('btnResetRemember').addEventListener('click', resetRememberedChapters);
+}
+if (els.btnToggleDuplicateMemory){
+  els.btnToggleDuplicateMemory.addEventListener('click', toggleDuplicateMemory);
+}
+if (els.btnToggleAutoIncrement){
+  els.btnToggleAutoIncrement.addEventListener('click', toggleAutoIncrement);
+}
+updateDuplicateMemoryButton();
+updateAutoIncrementButton();
 
 updateStats();
 if (els.txtFileName && !String(els.txtFileName.value || '').trim()){
-  els.txtFileName.value = 'truyenchu';
+  els.txtFileName.value = 't2_c1';
   try { saveSettingsToLocal(); } catch(e) {}
 }
 if (els.multiTxtBatchSize && !String(els.multiTxtBatchSize.value || '').trim()){
-  els.multiTxtBatchSize.value = '60';
+  els.multiTxtBatchSize.value = '50';
 }
 if (els.multiTxtBatchInfo && !String(els.multiTxtBatchInfo.textContent || '').trim()){
   els.multiTxtBatchInfo.textContent = 'Batch hiện tại: chưa có dữ liệu.';
@@ -2013,88 +3249,6 @@ if (__restoredSettings){
   setStatus('✅ Đã khôi phục cài đặt mốc/tên file/tự tăng số đã lưu từ lần trước.', 'ok');
 }
 
-// ===== NEW: story ID counter =====
-const STORY_COUNTER_MAP_KEY = 'story_file_counters_v1';
-
-function loadStoryCounterMap(){
-  try{
-    const raw = localStorage.getItem(STORY_COUNTER_MAP_KEY);
-    return raw ? JSON.parse(raw) : {};
-  }catch(e){return {}}
-}
-function saveStoryCounterMap(map){
-  try{localStorage.setItem(STORY_COUNTER_MAP_KEY, JSON.stringify(map));}catch(e){}
-}
-function getStoryId(){
-  const el = document.getElementById('storyId');
-  return el ? (String(el.value).trim() || '1') : '1';
-}
-
-// Keep the story counter controls, but use the same filename rule:
-// - chuong70.txt -> 70, 71, 72...
-// - chuong.txt -> 1, 2, 3...
-const oldGetAutoIncrementFileName = getAutoIncrementFileName;
-getAutoIncrementFileName = function(fileName){
-  const p = splitFileNameParts(fileName);
-
-  const match = p.stem.match(/^(.*?)(\d+)$/);
-  let baseStem = p.stem.trim() || 'chuong_sach';
-  let startNum = 0;
-
-  if (match){
-    baseStem = match[1].trim() || 'chuong_sach';
-    startNum = parseInt(match[2], 10) || 0;
-  }
-
-  const storyId = getStoryId();
-  const map = loadStoryCounterMap();
-  if (!map[storyId]) map[storyId] = {};
-
-  const key = (baseStem + p.ext).toLowerCase();
-  if (!(key in map[storyId])){
-    map[storyId][key] = (startNum > 0) ? (startNum - 1) : 0;
-  }
-
-  map[storyId][key] = Number(map[storyId][key]) + 1;
-  saveStoryCounterMap(map);
-
-  return {
-    fileName: `${baseStem}${map[storyId][key]}${p.ext}`,
-    baseStem,
-    ext: p.ext,
-    count: map[storyId][key],
-    key
-  };
-};
-
-function resetStoryCounter(){
-  const storyId = getStoryId();
-  const map = loadStoryCounterMap();
-  if (map[storyId]) delete map[storyId];
-  saveStoryCounterMap(map);
-  clearDownloadedChapterHashesForStory(storyId);
-  setStatus(`✅ Đã reset truyện ID = <b>${storyId}</b> về 1 và xóa danh sách chương đã nhớ để chống trùng.`, 'ok');
-}
-
-function resetRememberedChapters(){
-  const storyId = (typeof getDuplicateStoryId === 'function') ? getDuplicateStoryId() : getStoryId();
-  clearDownloadedChapterHashesForStory(storyId);
-  try{ __lastAutoClipboardHash = ''; }catch(e){}
-  setStatus(`✅ Đã reset ghi nhớ chống trùng của truyện ID = <b>${storyId}</b>. Giờ copy lại chương cũ sẽ xử lý lại được.`, 'ok');
-}
-
-document.addEventListener('DOMContentLoaded', ()=>{
-  document.getElementById('btnResetStoryCounter')?.addEventListener('click', resetStoryCounter);
-  document.getElementById('btnResetRemember')?.addEventListener('click', resetRememberedChapters);
-  document.getElementById('btnToggleDuplicateMemory')?.addEventListener('click', toggleDuplicateMemory);
-  updateDuplicateMemoryButton();
-});
-
-// ===== override download to use the normal filename rule =====
-els.btnDownloadTxt.addEventListener('click', function(e){
-  e.stopImmediatePropagation?.();
-  downloadTxt();
-});
 // AUTO CLEAN WHEN PASTE / INPUT
 let autoCleanTimeout;
 els.input.addEventListener('input', () => {
@@ -2110,11 +3264,7 @@ els.input.addEventListener('input', () => {
 });
 
 
-// ===== FIX: download panel txt + auto increment =====
-// bind button
-if (document.getElementById('btnDownloadPanelTxt')){
-  document.getElementById('btnDownloadPanelTxt').addEventListener('click', downloadPanelTxt);
-}
+// Tải TXT trong panel gộp.
 
 </script>
 </body>
